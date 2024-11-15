@@ -1,14 +1,16 @@
 import time
 
-import glm
 import glfw
 import numpy as np
+
 import imgui
 from imgui.integrations.glfw import GlfwRenderer
+
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-from force_awakens.graphics.shader import get_shader_program
+
+T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 
 
 _axes_y = np.mgrid[0:2, 0:1:11j, 0:1].T.reshape((-1, 3)) - [0.5, 0.5, 0.0]
@@ -21,8 +23,8 @@ class App:
         window_size,
         name,
         zoom_sensitivity=0.1,
-        pan_sensitvity=0.0025,
-        orbit_sensitivity=0.004,
+        pan_sensitvity=0.001,
+        orbit_sensitivity=0.1,
     ):
         self.zoom_sensitivity = zoom_sensitivity
         self.pan_sensitvity = pan_sensitvity
@@ -118,25 +120,25 @@ class App:
 
         glColor3f(1.0, 1.0, 1.0)
         for point in _axes_x:
-            glVertex3f(*(point))
+            glVertex3f(*(point) @ T)
         for point in _axes_y:
-            glVertex3f(*point)
+            glVertex3f(*point @ T)
         glEnd()
 
         glLineWidth(2.0)
         glBegin(GL_LINES)
 
         glColor3f(1.0, 0.0, 0.0)
-        glVertex3f(*[-0.5, 0.0, 0.0])
-        glVertex3f(*[0.5, 0.0, 0.0])
+        glVertex3f(*[-0.5, 0.0, 0.0] @ T)
+        glVertex3f(*[0.5, 0.0, 0.0] @ T)
 
         glColor3f(0.0, 1.0, 0.0)
-        glVertex3f(*[0.0, -0.5, 0.0])
-        glVertex3f(*[0.0, 0.5, 0.0])
+        glVertex3f(*[0.0, -0.5, 0.0] @ T)
+        glVertex3f(*[0.0, 0.5, 0.0] @ T)
 
         glColor3f(0.0, 0.0, 1.0)
-        glVertex3f(*[0.0, 0.0, -0.5])
-        glVertex3f(*[0.0, 0.0, 0.5])
+        glVertex3f(*[0.0, 0.0, -0.5] @ T)
+        glVertex3f(*[0.0, 0.0, 0.5] @ T)
 
         glEnd()
 
@@ -157,13 +159,13 @@ class App:
     def terminate(self):
         glfw.terminate()
 
-    def update(self, shader_program):
+    def update(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glClearColor(0.86, 0.87, 0.87, 1.0)
 
-        glUseProgram(shader_program)
-
-        proj = glm.ortho(
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glOrtho(
             self.view_left * self.zoom_level,
             self.view_right * self.zoom_level,
             -self.zoom_level,
@@ -172,69 +174,20 @@ class App:
             32,
         )
 
-        proj_loc = glGetUniformLocation(shader_program, "camera_projection")
-        glUniformMatrix4fv(proj_loc, 1, GL_TRUE, glm.value_ptr(proj))
-
-        pos = glm.translate(glm.vec3(self.pan_x, self.pan_y, 0.0))
-        pos @= glm.rotate(self.angle_x, (1.0, 0.0, 0.0))
-        pos @= glm.rotate(self.angle_y, (0.0, 1.0, 0.0))
-
-        pos_loc = glGetUniformLocation(shader_program, "camera_position")
-        glUniformMatrix4fv(pos_loc, 1, GL_TRUE, glm.value_ptr(pos))
+        glMatrixMode(GL_MODELVIEW)
+        glLoadIdentity()
+        glTranslatef(self.pan_x, self.pan_y, 0.0)
+        glRotatef(self.angle_x, 1.0, 0.0, 0.0)
+        glRotatef(self.angle_y, 0.0, 1.0, 0.0)
 
         self.draw_axes()
 
     def rendering_loop(self, window, imgui_impl):
-        shader_program = get_shader_program()
-
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
 
-        vertices = np.array(
-            [
-                0.0,
-                1.0,
-                1.0,  # Top vertex
-                -1.0,
-                -1.0,
-                1.0,  # Bottom-left vertex
-                1.0,
-                -1.0,
-                1.0,  # Bottom-right vertex
-            ],
-            dtype=np.float32,
-        )
-
-        VAO = glGenVertexArrays(1)
-        glBindVertexArray(VAO)
-
-        VBO = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, VBO)
-        glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)
-
-        # Define the vertex position attribute (location 0)
-        glVertexAttribPointer(
-            0, 3, GL_FLOAT, GL_FALSE, 3 * vertices.itemsize, ctypes.c_void_p(0)
-        )
-        glEnableVertexAttribArray(0)
-
-        # Unbind VAO
-        glBindVertexArray(0)
-
         while not self.window_should_close(window):
-            self.update(shader_program)
-
-            glBindVertexArray(VAO)
-            glDrawArrays(GL_TRIANGLES, 0, 3)
-
-            imgui.new_frame()
-            imgui.begin("Sampling")
-
-            imgui.end()
-
-            imgui.render()
-            self.imgui_impl.process_inputs()
-            self.imgui_impl.render(imgui.get_draw_data())
+            self.update()
 
             glfw.swap_buffers(window)
             glfw.poll_events()

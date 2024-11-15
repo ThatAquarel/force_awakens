@@ -10,7 +10,6 @@ dependencies = [
   "imgui[full]",
   "pyopengl",
   "glfw",
-  "PyGLM"
 ]
 requires-python = ">=3.11"
 description = "The Force Awakens - 2024 McGill Physics Hackathon Submission"
