@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "force_awakens"
+version = "0.1.0"
+dependencies = [
+  "numpy",
+  "imgui[full]",
+  "pyopengl",
+  "glfw",
+]
+requires-python = ">=3.11"
+description = "The Force Awakens - 2024 McGill Physics Hackathon Submission"
+authors = [
+  {name = "Alex Xia", email = "xtxiatianyi@gmail.com"},
+  {name = "Thomas Deleuze-Bisson", email = "deleuzethomasbisson@gmail.com"},
+  {name = "Evan Parasol"},
+]
+readme = "README.md"
+license = {text = "MIT License"}
+keywords = ["physics", "gravity", "simulation", "force", "application"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Topic :: Multimedia :: Graphics :: 3D Rendering",
+  "Topic :: Scientific/Engineering :: Physics",
+  "Topic :: Scientific/Engineering :: Visualization"
+]
