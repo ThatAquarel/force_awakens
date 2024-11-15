@@ -16,7 +16,6 @@ T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 _axes_y = np.mgrid[0:2, 0:1:11j, 0:1].T.reshape((-1, 3)) - [0.5, 0.5, 0.0]
 _axes_x = _axes_y[:, [1, 0, 2]]
 
-
 class App:
     def __init__(
         self,
@@ -181,16 +180,90 @@ class App:
         glRotatef(self.angle_y, 0.0, 1.0, 0.0)
 
         self.draw_axes()
+    
 
-    def rendering_loop(self, window, imgui_impl):
+
+    def rendering_loop(self, window, imgui_impl, n_body=7, G=6.6743e-2):
+
+        m = np.array([3,4,5,6,7,12,2], dtype=np.float32)
+        a = np.zeros((n_body, 3), dtype=np.float32)
+        v = np.array(
+            [
+                [0, 0.25, 0],
+                [0, -0.5, 0],
+                [0, 0, 0.1],
+                [0.4, -0.5, 0],
+                [-0.3, 0, -0.3],
+                [0.2, -0.2, 0.2],
+                [0.2, -0.2, -0.4],
+            ],
+            dtype=np.float32,
+        )
+        s = np.array([[0, 0, 0], [0, 2, 0], [0, 0, 2], [2, 0, 0], [2, 2, 0], [2, 0, 2], [0, 2, 2]], dtype=np.float32)
+
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
+
+        start = time.time()
+        dt = 0
 
         while not self.window_should_close(window):
             self.update()
 
+            accelerations = {}
+            for body in range(n_body):
+                accelerations[body] = a[body]
+            print(accelerations)
+
+            for body in range(n_body):
+                others = [n for n in range(n_body) if n != body]
+
+                for i, j in enumerate(others):
+                    if (np.abs(s[body] - s[j]) < 0.05).all():
+                        m[body] = m[body] + m[j]
+                        a[body] += a[j]
+                        v[body] += v[j]
+                        m[j] = 0
+                        a[j] = np.zeros(3, dtype=np.float32)
+                        v[j] = np.zeros(3, dtype=np.float32)
+                        s[j] = np.zeros(3, dtype=np.float32)
+                        #others = others.pop(i)
+
+
+                    else:
+                        m_a = m[body]
+                        F_a = np.zeros(3, dtype=np.float32)
+
+                        m_b = m[j]
+                        s_a, s_b = s[body], s[j]
+
+                        ds = s_b - s_a
+                        d = np.linalg.norm(ds)
+                        Fg = G * m_a * m_b / d**2
+
+                        F_a += ds / d * Fg
+                        accelerations[body] += F_a
+                            
+            for body in range(n_body):
+
+                if m_a != 0:
+                    a[body] = accelerations[body] / m_a
+                    v[body] = a[body] * dt + v[body]
+                    s[body] = v[body] * dt + s[body]
+
+                if m[body] != 0:
+                    glPointSize(m[body] * 10)
+                    glBegin(GL_POINTS)
+                    glColor3f(1, 1, 1)
+                    glVertex3f(*s[body] @ T)
+                    glEnd()
+
             glfw.swap_buffers(window)
             glfw.poll_events()
+
+            current = time.time()
+            dt = current - start
+            start = current
 
         self.terminate()
 
