@@ -16,6 +16,7 @@ import force_awakens.mechanics
 from force_awakens.graphics.draw import Background, BlackHole, Planet
 from force_awakens.graphics.render import load_texture_simple
 from force_awakens.mechanics.mechanics import add_body
+from force_awakens.mechanics.colors import COLORS
 
 
 T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
@@ -323,15 +324,15 @@ class App:
             imgui.new_frame()
             imgui.begin("The Force Awakens")
 
-            if imgui.button("ADD BODY"):
-                add_body(
-                    render_calls,
-                    mask,
-                    s,
-                    v,
-                    self.zoom_level,
-                    (self.pan_x, self.pan_y),
-                )
+            # if imgui.button("ADD BODY"):
+            #     add_body(
+            #         render_calls,
+            #         mask,
+            #         s,
+            #         v,
+            #         self.zoom_level,
+            #         (self.pan_x, self.pan_y),
+            #     )
 
             if dt:
                 imgui.text(f"{1/dt:.2f} fps")
@@ -351,20 +352,36 @@ class App:
                     imgui.table_next_row()
                     imgui.spacing()
                     imgui.table_next_column()
-                    name, type_, mass, (id,width,height) = item
+                    name, body_type, mass, (id,width,height) = item
                     imgui.image(id,width,height)
 
                     imgui.table_next_column()
 
                     selection[i] = imgui.button(f"Select {name}")
                     imgui.text(name)
-                    imgui.text(f"  Mass: {mass} kg")
-                    imgui.text(f"  Type: {type_}")
+                    imgui.text(f"  Mass: {mass:.4g} kg")
+                    imgui.text(f"  Type: {body_type}")
                     imgui.separator()
 
                 if np.any(selection):
-                    selected_i = np.argmax(selection)
-                    print(self.items[selected_i][0])
+                    i = np.argmax(selection)
+                    name, _, mass, _ = self.items[i]
+                    print(f"body added {name}")
+
+                    draw_i = add_body(
+                        render_calls,
+                        mask,
+                        s,
+                        v,
+                        self.zoom_level,
+                        (self.pan_x, self.pan_y),
+                    )
+                    render_obj = render_calls[draw_i]
+                    render_obj.color_arr[:] = COLORS[i]
+                    render_obj.color_i = np.random.randint(0, COLORS.shape[1])
+                    r = np.log10(float(mass))
+                    render_obj.r = r * 0.015
+                    m[draw_i] = r
 
                 imgui.end_table()
 

@@ -1,5 +1,5 @@
 name_of_the_planet_stars,type_of_celestial_body,masses_in_kg,img_file
-HD_93129_A,O,3.7e + 25,light-blue.png
+HD_93129_A,O,3.7e+25,light-blue.png
 HAT_P_1,B,1.0e+27,light-blue.png
 HD_209458,A,1.3e+27,light-blue.png
 Kepler_22,,1.44e+25,orange-yellow.png
