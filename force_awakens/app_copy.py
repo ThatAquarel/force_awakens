@@ -183,14 +183,15 @@ class App:
 
         self.draw_axes()
     
-    def planet_adder(self, window, button, action, mods):
+    def planet_adder(render_mask, self, window, button, action, mods):
         if self.imgui_impl != None and imgui.get_io().want_capture_mouse:
             return
 
         press = action == glfw.PRESS
 
         if button == glfw.MOUSE_BUTTON_RIGHT:
-            pass
+            new_render_mask = np.array([True if j == True else True if render_mask[i-1] == True else False for i, j in enumerate(render_mask)])
+            return new_render_mask
 
     def rendering_loop(self, window, imgui_impl, n_body=64, G=6.6743e-2, wanted=10):
 
@@ -217,6 +218,7 @@ class App:
         while not self.window_should_close(window):
             self.update()
             
+            render_mask = self.planet_adder(render_mask)
             print(render_mask)
 
             accelerations = {}
