@@ -209,14 +209,16 @@ class Planet:
 
 
 class BlackHole:
-    def __init__(self, r, res=25, n_stars=4096):
+    def __init__(self, r, res=25, n_stars=3072):
         self.vertices = generate_sphere_vertices(r, res, res)
         self.vertices = self.vertices.reshape((-1, 3))
 
-        self.stars = np.random.random((n_stars, 3)) * 10 - 5
+        self.stars = np.random.random((n_stars, 3)) * 100 - 50
         self.stars = np.tan(self.stars)
         self.colors = np.random.random((n_stars, 3))
         self.colors = self.colors + 0.25 * (1 -self.colors)
+
+        self.distances = np.linalg.norm(self.stars, axis=1)
 
         self.r = r
 
@@ -234,9 +236,17 @@ class BlackHole:
         glBegin(GL_POINTS)
 
         stars = self.stars * self.r
-        for star, color in zip(stars, self.colors):
-            d = np.linalg.norm(star)
-            mat = rotation_matrix(0,0,1/d**2 * t * 0.5)
+
+        for d, star, color in zip(self.distances, stars, self.colors):
+            rx = 1/d**2 * t
+
+            mat = np.array(
+        [
+            [1, 0, 0],
+            [0, np.cos(rx), np.sin(rx)],
+            [0, -np.sin(rx), np.cos(rx)],
+        ]
+    )
 
             glColor3f(*color)
             glVertex3f(*star @ mat @ T)
