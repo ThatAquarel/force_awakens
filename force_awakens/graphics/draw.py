@@ -192,6 +192,10 @@ class Tars:
         glEnd()
 
 
+thetas = np.linspace(0, 2*np.pi, 100)
+circle_vertices = np.hstack((np.cos(thetas), np.sin(thetas)))
+
+
 class Planet:
     def __init__(self, r, res=10, s_cache=256):
         self.planet = generate_sphere_vertices(1, res, res)
@@ -203,9 +207,9 @@ class Planet:
 
         self.r = r
 
-    def _draw_sphere(self, r, s, alpha):
+    def _draw_sphere(self, scalar, r, s, alpha):
         glBegin(GL_TRIANGLES)
-        glColor4f(1, 1, 1, alpha)
+        glColor4f(1, scalar, 1, alpha)
         pos = (self.planet * r + s) @ T
         for v in pos:
             glVertex3f(*v)
@@ -213,11 +217,21 @@ class Planet:
         glEnd()
 
     def draw(self, s):
-        self._draw_sphere(self.r, s, 1.0)
+        scalar = (self.prev_n / (self.s_cache - 1)) ** 3
+        self._draw_sphere(scalar, self.r * scalar, s, 1.0)
+
+        if self.prev_n < (self.s_cache - 1):
+            uniform_points = np.random.uniform(-1, 1, (100, 3))
+            uniform_points = np.tan(uniform_points)
+            glBegin(GL_POINTS)
+            glColor3f(1-scalar,0, 1-scalar)
+            for point in uniform_points:
+                glVertex3f(*(point + s) @ T)
+            glEnd()
 
         glLineWidth(1.0)
         glBegin(GL_LINE_STRIP)
-        glColor3f(0.5, 0.5, 0.5)
+        glColor3f(0.5, 0.5 * scalar, 0.5)
         for prev_s in self.prev_s[: self.prev_n : 4]:
             glVertex3f(*prev_s @ T)
         glEnd()
@@ -309,8 +323,6 @@ class Background:
         stars = self._radial()
 
         colors = np.random.random((n_stars, 3))
-        # colors = colors + 0.2 * (1 - colors)
-        # colors = colors + 0.2 * (1 - colors)
 
         self.data = np.empty((n_stars, 6), dtype=np.float32)
         self.data[:, :3] = stars
