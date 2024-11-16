@@ -22,6 +22,6 @@ We've designed, as mentionned earlier, a sandbox where it is possible for users 
 
 # How it works
 
-Now let's get into the interesting part; how the project works ! First, lets deconstruct it into a few steps... 1. Exoplanets scouting and gathering of data, 2. Development of an 3d gravity neutral envrionment to oberve the behavior of planets, 3.
+Now let's get into the interesting part; how the project works ! First, lets deconstruct it into a few steps... 1. Exoplanets scouting, gathering of data and accurate representation of celestial bodies, 2. Development of an 3d gravity neutral envrionment to oberve the behavior of planets using OpenGUI, 3. Implementation of matrixes to evaluate the "planet throwing" feature of our project using linear algebra.
 
 
