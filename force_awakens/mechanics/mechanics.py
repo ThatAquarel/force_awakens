@@ -6,7 +6,7 @@ from force_awakens.graphics.draw import rotation_matrix
 
 T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 
-def add_body(render_calls, mask, s, v, zoom, cam_t):
+def add_body(render_calls, mask, mask_compute, s, v, zoom, cam_t):
     modelview_matrix = glGetFloatv(GL_MODELVIEW_MATRIX)
     modelview_matrix = np.array(modelview_matrix).reshape(4, 4)
     vector = np.array([0.0, 0.0, -1.0, 1])
@@ -24,5 +24,6 @@ def add_body(render_calls, mask, s, v, zoom, cam_t):
     v[i] = vec @ np.linalg.inv(T)
 
     mask[i] = True
+    mask_compute[i] = True
     render_calls[i].prev_n = 0
     render_calls[i].intro = True

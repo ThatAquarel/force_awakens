@@ -237,7 +237,7 @@ class Planet:
         else:
             self.intro = False
 
-        glLineWidth(1.0)
+        glLineWidth(2.0)
         glBegin(GL_LINE_STRIP)
         glColor3f(0.5, 0.5 * scalar, 0.5)
         for prev_s in self.prev_s[: self.prev_n : 4]:
