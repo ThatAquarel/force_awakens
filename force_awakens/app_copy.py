@@ -9,8 +9,9 @@ from imgui.integrations.glfw import GlfwRenderer
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-from force_awakens.graphics.draw import Planet
+from force_awakens.graphics.draw import BlackHole, Planet
 
+last_call = time.time()
 
 T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 
@@ -18,7 +19,12 @@ T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 _axes_y = np.mgrid[0:2, 0:1:11j, 0:1].T.reshape((-1, 3)) - [0.5, 0.5, 0.0]
 _axes_x = _axes_y[:, [1, 0, 2]]
 
-render_mask = np.zeros(64, dtype=bool)
+n_body = 64
+v = np.zeros((n_body, 3), dtype=np.float32)
+s = np.zeros((n_body, 3), dtype=np.float32)
+mask = np.zeros(n_body, dtype=bool)
+
+
 class App:
     def __init__(
         self,
@@ -38,11 +44,12 @@ class App:
         self.dragging, self.panning = False, False
         self.zoom_level = 1.0
         self.view_left, self.view_right = 0, 0
+        self._actions = []
 
         self.window = self.window_init(window_size, name)
         self.imgui_impl = self.init_imgui(self.window)
 
-        self.rendering_loop(self.window, self.imgui_impl, self.mouse_button_callback)
+        self.rendering_loop(self.window, self.imgui_impl)
 
     def window_init(self, window_size, name):
         if not glfw.init():
@@ -80,11 +87,14 @@ class App:
             self.dragging = press
             shift = glfw.get_key(window, glfw.KEY_LEFT_SHIFT) == glfw.PRESS
             self.panning = shift
+            return
         elif button == glfw.MOUSE_BUTTON_MIDDLE:
             self.dragging = press
             self.panning = press
-        elif button == glfw.MOUSE_BUTTON_RIGHT:
-            self.planet_adder()
+            return
+
+        for callback in self._actions:
+            return callback(window, button, action, mods)
 
     def cursor_pos_callback(self, window, xpos, ypos):
         if self.imgui_impl != None and imgui.get_io().want_capture_mouse:
@@ -185,49 +195,121 @@ class App:
         glRotatef(self.angle_y, 0.0, 1.0, 0.0)
 
         self.draw_axes()
-    
-    def planet_adder(self):
-        global render_mask
-        new_render_mask = np.array([True if j == True else True if render_mask[i-1] == True else False for i, j in enumerate(render_mask)])
-        render_mask = new_render_mask
 
-    def rendering_loop(self, window, imgui_impl, button, n_body=64, G=6.6743e-2, wanted=10):
+    def rendering_loop(self, window, imgui_impl, G=6.6743e-2, wanted=1):
+        global mask
+        # global v
+        # global s
 
         m = np.random.randint(10, 30, n_body)
-        #m = np.array([3,4,5,6,7,12,2], dtype=np.float32)
         a = np.zeros((n_body, 3), dtype=np.float32)
+        a_sum = np.zeros((n_body, 3), dtype=np.float32)
         v = np.random.randint(-1, 1, (n_body, 3)).astype(float)
         s = np.random.randint(-10, 10, (n_body, 3)).astype(float)
 
-        #radius = [1,2,3,4,5,6,7]
+        def planet_adder(window, button, action, mods):
+            global mask
+            global last_call
+            # global v
+            # global s
+
+            now = time.time()
+            if now-last_call < 0.2:
+                return
+
+            if button != glfw.MOUSE_BUTTON_RIGHT:
+                return
+
+            rx = np.radians(self.angle_x)
+            ry = np.radians(self.angle_y)
+            tx, ty, tz = self.pan_x, self.pan_y, 0
+
+            camera_transformation_on_point = (
+                np.array(([1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [tx, ty, tz, 1]))
+                @ (
+                    np.array(
+                        [
+                            [1, 0, 0, 0],
+                            [0, np.cos(rx), np.sin(rx), 0],
+                            [0, -np.sin(rx), np.cos(rx), 0],
+                            [0, 0, 0, 1],
+                        ]
+                    )
+                )
+                @ (
+                    np.array(
+                        [
+                            [np.cos(ry), 0, -np.sin(ry), 0],
+                            [0, 1, 0, 0],
+                            [np.sin(ry), 0, np.cos(ry), 0],
+                            [0, 0, 0, 1],
+                        ]
+                    )
+                )
+            )
+
+            camera_vector = np.array([0, 0, -1, 1])
+            xyz_velocity_vector = camera_vector@camera_transformation_on_point
+
+            new_mask = np.array(
+                [
+                    True if j == True else True if mask[i - 1] == True else False
+                    for i, j in enumerate(mask)
+                ]
+            )
+
+            x, y = glfw.get_cursor_pos(window)
+
+            #new_mask = new_mask[::-1]
+            for i in range(len(new_mask)-1):
+                if (new_mask[i] == True) and (new_mask[i+1] == False):
+                    #new_mask[i] == True
+                    v[i] = xyz_velocity_vector[:-1]
+                    s[i] = np.array([x, y, 0])
+            #new_mask = new_mask[::-1]
+            mask = new_mask
+
+            # print(tx)
+            # print(ty)
+            # print(tz)
+            # print(rx)
+            # print(rx)
+            # print(camera_vector)
+            # print(camera_transformation_on_point)
+            # print(xyz_velocity_vector)
+            # print(xyz_velocity_vector[:-1])
+            # print(v[i])
+            
+            
+            last_call = time.time()
+
+        self._actions.append(planet_adder)
+
         render_calls = [Planet(r * 0.01) for r in m]
-        #render_mask = np.zeros(n_body, dtype=bool)
+        # mask = np.zeros(n_body, dtype=bool)
 
         for i in range(wanted):
-            render_mask[i] = True
-        
-        print(render_mask)
+            mask[i] = True
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
+        glEnable(GL_POINT_SMOOTH)
+
+        bh = BlackHole(1)
 
         start = time.time()
         dt = 0
 
         while not self.window_should_close(window):
             self.update()
-            
-            print(render_mask)
 
-            accelerations = {}
-            for body in range(n_body):
-                accelerations[body] = a[body]
+            a_sum[:] = a
 
             for body in range(n_body):
                 for j in range(n_body):
                     if j == body:
                         continue
-                    if not render_mask[j]:
+                    if not mask[j]:
                         continue
 
                     if (np.abs(s[body] - s[j]) < 0.05).all():
@@ -235,7 +317,7 @@ class App:
                         a[body] += a[j]
                         v[body] += v[j]
 
-                        render_mask[j] = False
+                        mask[j] = False
                     else:
                         m_a = m[body]
                         F_a = np.zeros(3, dtype=np.float32)
@@ -248,23 +330,33 @@ class App:
                         Fg = G * m_a * m_b / d**2
 
                         F_a += ds / d * Fg
-                        accelerations[body] += F_a
+                        a_sum[body] += F_a
+
+            a[mask] = a_sum[mask] / m[mask, np.newaxis]
+            v[mask] = a[mask] * dt + v[mask]
+            s[mask] = v[mask] * dt + s[mask]
 
             for body in range(n_body):
-                if not render_mask[body]:
+                if not mask[body]:
                     continue
-
-                a[body] = accelerations[body] / m_a
-                v[body] = a[body] * dt + v[body]
-                s[body] = v[body] * dt + s[body]
-
                 render_calls[body].draw(s[body])
+            bh.draw([0, 0, 0], start)
 
-                # glPointSize(m[body] * 10)
-                # glBegin(GL_POINTS)
-                # glColor3f(1, 1, 1)
-                # glVertex3f(*s[body] @ T)
-                # glEnd()
+            imgui.new_frame()
+            imgui.begin("The Force Awakens")
+
+            if dt:
+                imgui.text(f"{1/dt:.2f} fps")
+
+            imgui.spacing()
+            imgui.spacing()
+
+            imgui.text("Planets")
+
+            imgui.end()
+            imgui.render()
+            imgui_impl.process_inputs()
+            imgui_impl.render(imgui.get_draw_data())
 
             glfw.swap_buffers(window)
             glfw.poll_events()
@@ -278,3 +370,28 @@ class App:
 
 def run():
     App((1280, 720), "The Force Awakens")
+
+
+# inverse_full_camera_transformation = np.linalg.inv(
+#     np.array([1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [tx, ty, tz, 1])
+#     @ (
+#         np.array(
+#             [
+#                 [1, 0, 0, 0],
+#                 [0, np.cos(rx), np.sin(rx), 0],
+#                 [0, -np.sin(rx), np.cos(rx), 0],
+#                 [0, 0, 0, 1],
+#             ]
+#         )
+#     )
+#     @ (
+#         np.array(
+#             [
+#                 [np.cos(ry), 0, -np.sin(ry), 0],
+#                 [0, 1, 0, 0],
+#                 [np.sin(ry), 0, np.cos(ry), 0],
+#                 [0, 0, 0, 1],
+#             ]
+#         )
+#     )
+# )
