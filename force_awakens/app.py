@@ -192,7 +192,7 @@ class App:
         v = np.random.randint(-1, 1, (n_body, 3)).astype(float)
         s = np.random.randint(-10, 10, (n_body, 3)).astype(float)
 
-        render_calls = [Planet(r * 0.001) for r in m]
+        render_calls = [Planet(r * 0.01) for r in m]
         mask = np.zeros(n_body, dtype=bool)
 
         for i in range(wanted):
@@ -246,7 +246,7 @@ class App:
                 if not mask[body]:
                     continue
                 render_calls[body].draw(s[body])
-            bh.draw([0, 0, 0], start)
+            # bh.draw([0, 0, 0], start)
 
             imgui.new_frame()
             imgui.begin("The Force Awakens")

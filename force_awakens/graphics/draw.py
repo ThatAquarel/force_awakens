@@ -188,7 +188,7 @@ class Tars:
 
 
 class Planet:
-    def __init__(self, r, res=10, s_cache=512):
+    def __init__(self, r, res=10, s_cache=256):
         self.planet = generate_sphere_vertices(1, res, res)
         self.planet = self.planet.reshape((-1, 3))
 
@@ -210,12 +210,12 @@ class Planet:
     def draw(self, s):
         self._draw_sphere(self.r, s, 1.0)
 
-        for i, prev_s in enumerate(self.prev_s[: self.prev_n]):
-            scalar = 1 / (i + 1) * self.r * 512
-            glPointSize(scalar)
-            glBegin(GL_POINTS)
+        glLineWidth(1.0)
+        glBegin(GL_LINE_STRIP)
+        glColor3f(0.5, 0.5, 0.5)
+        for prev_s in self.prev_s[: self.prev_n : 4]:
             glVertex3f(*prev_s @ T)
-            glEnd()
+        glEnd()
 
         self.prev_s[1:] = self.prev_s[:-1]
         self.prev_s[0] = s
