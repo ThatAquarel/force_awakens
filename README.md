@@ -20,4 +20,8 @@ Hi, we're three Dawson College Students in the Enriched Science Program. As we s
 
 We've designed, as mentionned earlier, a sandbox where it is possible for users to add all sorts of celestial bodies ranging from black holes to various exoplanets, even including a few ones from you favorite shows in order to observe their graviationnal influence over each other in a neutral spatial environment and create an interesting and visual learning experience for the user. We think that such a project makes science more accessible to everyone as sometimes, just a visual representation of something makes us understand a concept so much better.
 
+# How it works
+
+Now let's get into the interesting part; how the project works ! First, lets deconstruct it into a few steps... 1. Exoplanets scouting and gathering of data, 2. Development of an 3d gravity neutral envrionment to oberve the behavior of planets, 3.
+
 
