@@ -7,8 +7,8 @@ import importlib
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-import force_awakens.graphics
-from force_awakens.graphics.render import create_vbo, update_vbo, load_texture
+from force_awakens.mechanics.colors import COLORS
+from force_awakens.graphics.render import create_vbo, update_vbo
 
 T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 
@@ -209,37 +209,45 @@ class Planet:
 
         self.intro = False
 
+        # self.color_i = np.random.randint(0, COLORS.shape[1], len(self.planet))
+        self.color_i = 0
+        self.color_arr = np.ones(COLORS.shape[1:], dtype=np.float32)
+
     def _draw_sphere(self, scalar, r, s, alpha):
         glBegin(GL_TRIANGLES)
         glColor4f(1, scalar, 1, alpha)
         pos = (self.planet * r + s) @ T
+        col = self.color_arr[self.color_i] * [1, scalar, 1]
+        glColor4f(*col, alpha) 
         for v in pos:
             glVertex3f(*v)
-
         glEnd()
 
-    def draw(self, s, _):
+    def draw(self, s, _, decay):
         if self.intro:
             scalar = (self.prev_n / (self.s_cache - 1)) ** 3
         else:
-            scalar = 1
-        self._draw_sphere(scalar, self.r * scalar, s, 1.0)
+            scalar = decay
+        if decay == 1:
+            self._draw_sphere(scalar, self.r * scalar, s, 1.0)
 
         if self.prev_n < (self.s_cache - 1):
             uniform_points = np.random.uniform(-1, 1, (100, 3))
             uniform_points = np.tan(uniform_points)
             glPointSize(2.0)
             glBegin(GL_POINTS)
-            glColor3f(1-scalar,0, 1-scalar)
+            glColor4f(1-scalar,0, 1-scalar, decay)
             for point in uniform_points:
                 glVertex3f(*(point + s) @ T)
             glEnd()
         else:
             self.intro = False
 
-        glLineWidth(1.0)
+        glLineWidth(2.0)
         glBegin(GL_LINE_STRIP)
-        glColor3f(0.5, 0.5 * scalar, 0.5)
+        
+        col = self.color_arr[self.color_i] * [0.5, 0.5*scalar, 0.5]
+        glColor3f(*col)
         for prev_s in self.prev_s[: self.prev_n : 4]:
             glVertex3f(*prev_s @ T)
         glEnd()
@@ -300,7 +308,7 @@ class BlackHole:
     
         return self.data
 
-    def draw(self, s, t):
+    def draw(self, s, t, decay):
         glDepthMask(GL_FALSE);
         glBindBuffer(GL_ARRAY_BUFFER, self.point_vbo)
 

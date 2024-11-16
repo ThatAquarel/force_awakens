@@ -1,7 +1,10 @@
+import io
 import time
+import importlib.resources
 
 import glfw
 import numpy as np
+import pandas as pd
 
 import imgui
 from imgui.integrations.glfw import GlfwRenderer
@@ -9,8 +12,11 @@ from imgui.integrations.glfw import GlfwRenderer
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
+import force_awakens.mechanics
 from force_awakens.graphics.draw import Background, BlackHole, Planet
+from force_awakens.graphics.render import load_texture_simple
 from force_awakens.mechanics.mechanics import add_body
+from force_awakens.mechanics.colors import COLORS
 
 
 T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
@@ -43,7 +49,31 @@ class App:
         self.window = self.window_init(window_size, name)
         self.imgui_impl = self.init_imgui(self.window)
 
+        self._load_planets()
         self.rendering_loop(self.window, self.imgui_impl)
+
+
+    def _load_planets(self):
+        self.items = []
+
+        binary = importlib.resources.read_binary(
+            force_awakens.mechanics, "elements_in_space.csv"
+        )
+        df = pd.read_csv(io.BytesIO(binary))
+        for _, row in df.iterrows():
+            name = row["name_of_the_planet_stars"]
+            type_ = row["type_of_celestial_body"]
+            mass = row["masses_in_kg"]
+
+            img_file = row["img_file"]
+
+            if not pd.isna(img_file):
+                img_id, width, height = load_texture_simple(img_file)
+            else:
+                continue
+            width, height = width // 2, height // 2
+
+            self.items.append([name, type_, mass, (img_id, width, height)])
 
     def window_init(self, window_size, name):
         if not glfw.init():
@@ -185,31 +215,42 @@ class App:
 
         # self.draw_axes()
 
-    def rendering_loop(self, window, imgui_impl, n_body=32, G=6.6743e-2, wanted=10):
+    def rendering_loop(
+        self,
+        window,
+        imgui_impl,
+        n_body=32,
+        G=6.6743e-2,
+        wanted=10,
+        black_hole_r=1,
+    ):
         m = np.random.randint(10, 30, n_body)
-        # m = np.array([3,4,5,6,7,12,2], dtype=np.float32)
         a = np.zeros((n_body, 3), dtype=np.float32)
         a_sum = np.zeros((n_body, 3), dtype=np.float32)
         v = np.random.randint(-1, 1, (n_body, 3)).astype(float)
         s = np.random.randint(-10, 10, (n_body, 3)).astype(float)
 
+        decaying = np.zeros(n_body, dtype=bool)
+        decay = np.ones(n_body, dtype=np.float32)
+
         m[0] = 800
         v[0] = 0
         s[0] = 0
-        render_calls = [BlackHole(1)]
+        render_calls = [BlackHole(black_hole_r)]
         for i, r in enumerate(m):
             if i == 0:
                 continue
             render_calls.append(Planet(r * 0.01))
 
         mask = np.zeros(n_body, dtype=bool)
-
         for i in range(wanted):
             mask[i] = True
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
         glEnable(GL_POINT_SMOOTH)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glEnable(GL_BLEND)
 
         background = Background()
 
@@ -234,7 +275,12 @@ class App:
                     if not mask[j]:
                         continue
 
-                    if (np.abs(s[body] - s[j]) < 0.05).all():
+                    s_a, s_b = s[body], s[j]
+
+                    ds = s_b - s_a
+                    d = np.linalg.norm(ds)
+
+                    if d < 0.05:
                         m[body] = m[body] + m[j]
                         a[body] += a[j]
                         v[body] += v[j]
@@ -245,18 +291,26 @@ class App:
                         F_a = np.zeros(3, dtype=np.float32)
 
                         m_b = m[j]
-                        s_a, s_b = s[body], s[j]
-
-                        ds = s_b - s_a
-                        d = np.linalg.norm(ds)
                         Fg = G * m_a * m_b / d**2
 
                         F_a += ds / d * Fg
                         a_sum[body] += F_a
 
-            a[mask] = a_sum[mask] / m[mask, np.newaxis]
-            v[mask] = a[mask] * dt + v[mask]
-            s[mask] = v[mask] * dt + s[mask]
+                    if body != 0 and np.linalg.norm(s_a) < black_hole_r:
+                        decaying[body] = True
+
+                if decaying[body]:
+                    decay[body] *= 0.95
+                    v[body] = 0
+                    if decay[body] < 0.05:
+                        decaying[body] = False
+                        decay[body] = 1.0
+                        mask[body] = False
+
+            m_phys = mask & (~decaying)
+            a[m_phys] = a_sum[m_phys] / m[m_phys, np.newaxis]
+            v[m_phys] = a[m_phys] * dt + v[m_phys]
+            s[m_phys] = v[m_phys] * dt + s[m_phys]
 
             v[0] = 0
             s[0] = 0
@@ -265,20 +319,20 @@ class App:
             for body in range(n_body):
                 if not mask[body]:
                     continue
-                render_calls[body].draw(s[body], start)
+                render_calls[body].draw(s[body], start, decay[body])
 
             imgui.new_frame()
             imgui.begin("The Force Awakens")
 
-            if imgui.button("ADD BODY"):
-                add_body(
-                    render_calls,
-                    mask,
-                    s,
-                    v,
-                    self.zoom_level,
-                    (self.pan_x, self.pan_y),
-                )
+            # if imgui.button("ADD BODY"):
+            #     add_body(
+            #         render_calls,
+            #         mask,
+            #         s,
+            #         v,
+            #         self.zoom_level,
+            #         (self.pan_x, self.pan_y),
+            #     )
 
             if dt:
                 imgui.text(f"{1/dt:.2f} fps")
@@ -287,7 +341,49 @@ class App:
             imgui.spacing()
             imgui.spacing()
 
-            imgui.text("Planets")
+            if imgui.begin_table("Please chose your celestial body !", 2):
+                imgui.table_setup_column("Images")
+                imgui.table_setup_column("Infos")
+                imgui.table_headers_row()
+
+                selection = np.zeros(len(self.items), dtype=bool)
+
+                for i, item in enumerate(self.items):
+                    imgui.table_next_row()
+                    imgui.spacing()
+                    imgui.table_next_column()
+                    name, body_type, mass, (id,width,height) = item
+                    imgui.image(id,width,height)
+
+                    imgui.table_next_column()
+
+                    selection[i] = imgui.button(f"Select {name}")
+                    imgui.text(name)
+                    imgui.text(f"  Mass: {mass:.4g} kg")
+                    imgui.text(f"  Type: {body_type}")
+                    imgui.separator()
+
+                if np.any(selection):
+                    i = np.argmax(selection)
+                    name, _, mass, _ = self.items[i]
+                    print(f"body added {name}")
+
+                    draw_i = add_body(
+                        render_calls,
+                        mask,
+                        s,
+                        v,
+                        self.zoom_level,
+                        (self.pan_x, self.pan_y),
+                    )
+                    render_obj = render_calls[draw_i]
+                    render_obj.color_arr[:] = COLORS[i]
+                    render_obj.color_i = np.random.randint(0, COLORS.shape[1])
+                    r = np.log10(float(mass))
+                    render_obj.r = r * 0.015
+                    m[draw_i] = r
+
+                imgui.end_table()
 
             imgui.end()
             imgui.render()

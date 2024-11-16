@@ -26,3 +26,5 @@ def add_body(render_calls, mask, s, v, zoom, cam_t):
     mask[i] = True
     render_calls[i].prev_n = 0
     render_calls[i].intro = True
+
+    return i

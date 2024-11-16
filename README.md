@@ -74,4 +74,22 @@ We started by looking on various NASA websites for exoplanets and information ab
 
 # 3. Implementation of linear algebra to solve an interesting problem
 
+<<<<<<< HEAD
  -->
+=======
+# Contact
+
+
+
+# References
+
+1. Rohlfs, M., & Pohl, T. (2009). Quantum dots in semiconductor nanostructures: From basic physics to quantum technologies. Proceedings of the National Academy of Sciences, 106(47), 20129-20134. https://doi.org/10.1073/pnas.0910927107
+2. Kisa, M. (n.d.). Rotations and rotation matrices. Retrieved from http://pajarito.materials.cmu.edu/documents/Kisa.Papers/Rotations%20and%20rotation%20matrices.pdf
+3. X-Engineer. (n.d.). Euler integration. X-Engineer. Retrieved November 16, 2024, from https://x-engineer.org/euler-integration/
+4. Takahashi, R., & Uchida, H. (2016). Relativistic MHD simulations of black hole systems. Physics of Fluids, 28(11), 110701. https://doi.org/10.1063/1.4964783
+5. Zhang, L., & Wu, H. (2023). "Research on Enhanced Orbit Prediction Techniques Utilizing Multiple Sets of Two-Line Element (TLE)." Journal of Spacecraft and Rockets, 60(5), 1181-1196. DOI: 10.2514/1.A34658
+6. National Oceanic and Atmospheric Administration (NOAA) and Joint Center for Satellite Data Assimilation (JCSDA). "Orbit Simulator for Satellite and Near-Space Platforms." NOAA Technical Report, 2021. DOI: 10.1016/j.ejpra.2020.100054
+7. NASA Jet Propulsion Laboratory. (2020). Eyes on Exoplanets. NASA. Retrieved November 16, 2024, from https://eyes.nasa.gov
+
+
+>>>>>>> dcf09b55569601a7284dd3985dd0a1f8fd845286
