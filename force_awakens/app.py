@@ -9,6 +9,8 @@ from imgui.integrations.glfw import GlfwRenderer
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
+from force_awakens.graphics.draw import Planet
+
 
 T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 
@@ -160,7 +162,7 @@ class App:
 
     def update(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glClearColor(0.86, 0.87, 0.87, 1.0)
+        glClearColor(0.05, 0.05, 0.05, 1.0)
 
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
@@ -169,8 +171,8 @@ class App:
             self.view_right * self.zoom_level,
             -self.zoom_level,
             self.zoom_level,
-            -32,
-            32,
+            -128,
+            128,
         )
 
         glMatrixMode(GL_MODELVIEW)
@@ -185,21 +187,15 @@ class App:
 
     def rendering_loop(self, window, imgui_impl, n_body=7, G=6.6743e-2):
 
-        m = np.array([3,4,5,6,7,12,2], dtype=np.float32)
+        m = np.random.randint(1, 10, n_body)
+        #m = np.array([3,4,5,6,7,12,2], dtype=np.float32)
         a = np.zeros((n_body, 3), dtype=np.float32)
-        v = np.array(
-            [
-                [0, 0.25, 0],
-                [0, -0.5, 0],
-                [0, 0, 0.1],
-                [0.4, -0.5, 0],
-                [-0.3, 0, -0.3],
-                [0.2, -0.2, 0.2],
-                [0.2, -0.2, -0.4],
-            ],
-            dtype=np.float32,
-        )
-        s = np.array([[0, 0, 0], [0, 2, 0], [0, 0, 2], [2, 0, 0], [2, 2, 0], [2, 0, 2], [0, 2, 2]], dtype=np.float32)
+        v = np.random.randint(-1, 1, (n_body, 3)).astype(float)
+        s = np.random.randint(-3, 3, (n_body, 3)).astype(float)
+
+        radius = [1,2,3,4,5,6,7]
+        render_calls = [Planet(r * 0.01) for r in radius]
+        render_mask = np.ones(n_body, dtype=bool)
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
@@ -208,28 +204,26 @@ class App:
         dt = 0
 
         while not self.window_should_close(window):
+            print(render_mask)
             self.update()
 
             accelerations = {}
             for body in range(n_body):
                 accelerations[body] = a[body]
-            print(accelerations)
 
             for body in range(n_body):
-                others = [n for n in range(n_body) if n != body]
+                for j in range(n_body):
+                    if j == body:
+                        continue
+                    if not render_mask[j]:
+                        continue
 
-                for i, j in enumerate(others):
                     if (np.abs(s[body] - s[j]) < 0.05).all():
                         m[body] = m[body] + m[j]
                         a[body] += a[j]
                         v[body] += v[j]
-                        m[j] = 0
-                        a[j] = np.zeros(3, dtype=np.float32)
-                        v[j] = np.zeros(3, dtype=np.float32)
-                        s[j] = np.zeros(3, dtype=np.float32)
-                        #others = others.pop(i)
 
-
+                        render_mask[j] = False
                     else:
                         m_a = m[body]
                         F_a = np.zeros(3, dtype=np.float32)
@@ -243,20 +237,22 @@ class App:
 
                         F_a += ds / d * Fg
                         accelerations[body] += F_a
-                            
+
             for body in range(n_body):
+                if not render_mask[body]:
+                    continue
 
-                if m_a != 0:
-                    a[body] = accelerations[body] / m_a
-                    v[body] = a[body] * dt + v[body]
-                    s[body] = v[body] * dt + s[body]
+                a[body] = accelerations[body] / m_a
+                v[body] = a[body] * dt + v[body]
+                s[body] = v[body] * dt + s[body]
 
-                if m[body] != 0:
-                    glPointSize(m[body] * 10)
-                    glBegin(GL_POINTS)
-                    glColor3f(1, 1, 1)
-                    glVertex3f(*s[body] @ T)
-                    glEnd()
+                render_calls[body].draw(s[body])
+
+                # glPointSize(m[body] * 10)
+                # glBegin(GL_POINTS)
+                # glColor3f(1, 1, 1)
+                # glVertex3f(*s[body] @ T)
+                # glEnd()
 
             glfw.swap_buffers(window)
             glfw.poll_events()
