@@ -9,7 +9,7 @@ from imgui.integrations.glfw import GlfwRenderer
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-from force_awakens.graphics.draw import BlackHole, Planet
+from force_awakens.graphics.draw import Background, BlackHole, Planet
 
 
 T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
@@ -172,8 +172,8 @@ class App:
             self.view_right * self.zoom_level,
             -self.zoom_level,
             self.zoom_level,
-            -128,
-            128,
+            -1024,
+            1024,
         )
 
         glMatrixMode(GL_MODELVIEW)
@@ -182,7 +182,7 @@ class App:
         glRotatef(self.angle_x, 1.0, 0.0, 0.0)
         glRotatef(self.angle_y, 0.0, 1.0, 0.0)
 
-        self.draw_axes()
+        # self.draw_axes()
 
     def rendering_loop(self, window, imgui_impl, n_body=32, G=6.6743e-2, wanted=10):
         m = np.random.randint(10, 30, n_body)
@@ -204,11 +204,18 @@ class App:
 
         bh = BlackHole(1)
 
+        background = Background()
+
         start = time.time()
         dt = 0
 
         while not self.window_should_close(window):
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+            glClearColor(0.05, 0.05, 0.05, 1.0)
+
             self.update()
+            background.draw()
+            # self.draw_axes()
 
             a_sum[:] = a
 
