@@ -10,6 +10,7 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 
 from force_awakens.graphics.draw import Background, BlackHole, Planet
+from force_awakens.mechanics.mechanics import add_body
 
 
 T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
@@ -36,7 +37,7 @@ class App:
         self.pan_x, self.pan_y = 0.0, 0.0
         self.last_x, self.last_y = 0.0, 0.0
         self.dragging, self.panning = False, False
-        self.zoom_level = 1.0
+        self.zoom_level = 20.0
         self.view_left, self.view_right = 0, 0
 
         self.window = self.window_init(window_size, name)
@@ -215,7 +216,8 @@ class App:
 
             self.update()
             background.draw()
-            # self.draw_axes()
+
+            self.draw_axes()
 
             a_sum[:] = a
 
@@ -259,8 +261,19 @@ class App:
             imgui.new_frame()
             imgui.begin("The Force Awakens")
 
+            if imgui.button("ADD BODY"):
+                add_body(
+                    render_calls,
+                    mask,
+                    s,
+                    v,
+                    self.zoom_level,
+                    (self.pan_x, self.pan_y),
+                )
+
             if dt:
                 imgui.text(f"{1/dt:.2f} fps")
+            imgui.text(f"{np.sum(mask)} bodies")
 
             imgui.spacing()
             imgui.spacing()
