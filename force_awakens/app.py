@@ -34,16 +34,22 @@ class App:
         zoom_sensitivity=0.1,
         pan_sensitvity=0.001,
         orbit_sensitivity=0.1,
+        start_zoom=18,
     ):
         self.zoom_sensitivity = zoom_sensitivity
         self.pan_sensitvity = pan_sensitvity
         self.orbit_sensitivity = orbit_sensitivity
 
-        self.angle_x, self.angle_y = 45.0, 45.0
+        self.angle_x, self.angle_y = 20.0, 125.0
         self.pan_x, self.pan_y = 0.0, 0.0
         self.last_x, self.last_y = 0.0, 0.0
         self.dragging, self.panning = False, False
-        self.zoom_level = 20.0
+        self.zoom_level = start_zoom
+        self.start_zoom = start_zoom
+
+        self.start_time = time.time()
+        self.intro = True
+
         self.view_left, self.view_right = 0, 0
 
         self.window = self.window_init(window_size, name)
@@ -215,6 +221,14 @@ class App:
 
         # self.draw_axes()
 
+    def update_intro(self):
+        dt = time.time() - self.start_time
+        if dt > 4.0:
+            self.intro = False
+
+        progress = (1 / (dt-0.1))**2 + 1
+        self.zoom_level = progress * self.start_zoom
+
     def rendering_loop(
         self,
         window,
@@ -258,6 +272,8 @@ class App:
         dt = 0
 
         while not self.window_should_close(window):
+            if self.intro:
+                self.update_intro()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glClearColor(0.05, 0.05, 0.05, 1.0)
 
@@ -378,9 +394,8 @@ class App:
                     )
                     render_obj = render_calls[draw_i]
                     render_obj.color_arr[:] = COLORS[i]
-                    render_obj.color_i = np.random.randint(0, COLORS.shape[1])
                     r = np.log10(float(mass))
-                    render_obj.r = r * 0.015
+                    render_obj.r = r * 0.01
                     m[draw_i] = r
 
                 imgui.end_table()
@@ -401,4 +416,4 @@ class App:
 
 
 def run():
-    App((1280, 720), "The Force Awakens")
+    App((1920, 1080), "The Force Awakens")

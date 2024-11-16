@@ -209,15 +209,13 @@ class Planet:
 
         self.intro = False
 
-        # self.color_i = np.random.randint(0, COLORS.shape[1], len(self.planet))
-        self.color_i = 0
-        self.color_arr = np.ones(COLORS.shape[1:], dtype=np.float32)
+        self.color_arr = np.ones(3, dtype=np.float32)
 
     def _draw_sphere(self, scalar, r, s, alpha):
         glBegin(GL_TRIANGLES)
         glColor4f(1, scalar, 1, alpha)
         pos = (self.planet * r + s) @ T
-        col = self.color_arr[self.color_i] * [1, scalar, 1]
+        col = self.color_arr * [1, scalar, 1]
         glColor4f(*col, alpha) 
         for v in pos:
             glVertex3f(*v)
@@ -246,7 +244,7 @@ class Planet:
         glLineWidth(2.0)
         glBegin(GL_LINE_STRIP)
         
-        col = self.color_arr[self.color_i] * [0.5, 0.5*scalar, 0.5]
+        col = self.color_arr * [0.5, 0.5*scalar, 0.5]
         glColor3f(*col)
         for prev_s in self.prev_s[: self.prev_n : 4]:
             glVertex3f(*prev_s @ T)
