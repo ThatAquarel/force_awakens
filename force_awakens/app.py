@@ -193,7 +193,15 @@ class App:
         v = np.random.randint(-1, 1, (n_body, 3)).astype(float)
         s = np.random.randint(-10, 10, (n_body, 3)).astype(float)
 
-        render_calls = [Planet(r * 0.01) for r in m]
+        m[0] = 800
+        v[0] = 0
+        s[0] = 0
+        render_calls = [BlackHole(1)]
+        for i, r in enumerate(m):
+            if i == 0:
+                continue
+            render_calls.append(Planet(r * 0.01))
+
         mask = np.zeros(n_body, dtype=bool)
 
         for i in range(wanted):
@@ -202,8 +210,6 @@ class App:
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
         glEnable(GL_POINT_SMOOTH)
-
-        bh = BlackHole(1)
 
         background = Background()
 
@@ -252,11 +258,14 @@ class App:
             v[mask] = a[mask] * dt + v[mask]
             s[mask] = v[mask] * dt + s[mask]
 
+            v[0] = 0
+            s[0] = 0
+            mask[0] = True
+
             for body in range(n_body):
                 if not mask[body]:
                     continue
-                render_calls[body].draw(s[body])
-            bh.draw([0, 0, 0], start)
+                render_calls[body].draw(s[body], start)
 
             imgui.new_frame()
             imgui.begin("The Force Awakens")

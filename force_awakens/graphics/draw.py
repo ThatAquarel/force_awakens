@@ -207,6 +207,8 @@ class Planet:
 
         self.r = r
 
+        self.intro = False
+
     def _draw_sphere(self, scalar, r, s, alpha):
         glBegin(GL_TRIANGLES)
         glColor4f(1, scalar, 1, alpha)
@@ -216,18 +218,24 @@ class Planet:
 
         glEnd()
 
-    def draw(self, s):
-        scalar = (self.prev_n / (self.s_cache - 1)) ** 3
+    def draw(self, s, _):
+        if self.intro:
+            scalar = (self.prev_n / (self.s_cache - 1)) ** 3
+        else:
+            scalar = 1
         self._draw_sphere(scalar, self.r * scalar, s, 1.0)
 
         if self.prev_n < (self.s_cache - 1):
             uniform_points = np.random.uniform(-1, 1, (100, 3))
             uniform_points = np.tan(uniform_points)
+            glPointSize(2.0)
             glBegin(GL_POINTS)
             glColor3f(1-scalar,0, 1-scalar)
             for point in uniform_points:
                 glVertex3f(*(point + s) @ T)
             glEnd()
+        else:
+            self.intro = False
 
         glLineWidth(1.0)
         glBegin(GL_LINE_STRIP)
