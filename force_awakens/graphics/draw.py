@@ -174,11 +174,9 @@ class Tars:
 
 
 class Planet:
-    def __init__(self, r, atm_scale=0.8,res=10, s_cache=512):
-        self.planet = generate_sphere_vertices(r, res, res)
+    def __init__(self, r, res=10, s_cache=512):
+        self.planet = generate_sphere_vertices(1, res, res)
         self.planet = self.planet.reshape((-1, 3))
-
-        self.atm_scale = atm_scale
 
         self.prev_s = np.empty((s_cache, 3))
         self.prev_n = 0
@@ -196,7 +194,7 @@ class Planet:
         glEnd()
 
     def draw(self, s):
-        self._draw_sphere(1, s, 1.0)
+        self._draw_sphere(self.r, s, 1.0)
 
         for i, prev_s in enumerate(self.prev_s[:self.prev_n]):
             scalar = 1 / (i + 1) * self.r * 512
@@ -211,10 +209,40 @@ class Planet:
 
 
 class BlackHole:
-    def __init__(self):
-        pass
+    def __init__(self, r, res=25, n_stars=4096):
+        self.vertices = generate_sphere_vertices(r, res, res)
+        self.vertices = self.vertices.reshape((-1, 3))
 
+        self.stars = np.random.random((n_stars, 3)) * 10 - 5
+        self.stars = np.tan(self.stars)
+        self.colors = np.random.random((n_stars, 3))
+        self.colors = self.colors + 0.25 * (1 -self.colors)
 
-    def draw(self, s):
-        ...
+        self.r = r
+
+    def _draw_center(self, r, s):
+        glBegin(GL_TRIANGLES)
+        glColor3f(0,0,0)
+        pos = (self.vertices * r + s) @ T
+        for v in pos:
+            glVertex3f(*v)
+
+        glEnd()
+
+    def draw(self, s, t):
+        glPointSize(1.0)
+        glBegin(GL_POINTS)
+
+        stars = self.stars * self.r
+        for star, color in zip(stars, self.colors):
+            d = np.linalg.norm(star)
+            mat = rotation_matrix(0,0,1/d**2 * t * 0.5)
+
+            glColor3f(*color)
+            glVertex3f(*star @ mat @ T)
+
+        glEnd()
+
+        glClear(GL_DEPTH_BUFFER_BIT)
+        self._draw_center(self.r, s)
 
