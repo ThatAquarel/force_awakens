@@ -9,7 +9,7 @@ from imgui.integrations.glfw import GlfwRenderer
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-from force_awakens.graphics.draw import Planet
+from force_awakens.graphics.draw import BlackHole, Planet
 
 
 T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
@@ -184,16 +184,14 @@ class App:
 
         self.draw_axes()
 
-    def rendering_loop(self, window, imgui_impl, n_body=64, G=6.6743e-2, wanted=10):
-
+    def rendering_loop(self, window, imgui_impl, n_body=32, G=6.6743e-2, wanted=10):
         m = np.random.randint(10, 30, n_body)
         # m = np.array([3,4,5,6,7,12,2], dtype=np.float32)
         a = np.zeros((n_body, 3), dtype=np.float32)
         v = np.random.randint(-1, 1, (n_body, 3)).astype(float)
         s = np.random.randint(-10, 10, (n_body, 3)).astype(float)
 
-        # radius = [1,2,3,4,5,6,7]
-        render_calls = [Planet(r * 0.01) for r in m]
+        render_calls = [Planet(r * 0.001) for r in m]
         render_mask = np.zeros(n_body, dtype=bool)
 
         for i in range(wanted):
@@ -202,13 +200,13 @@ class App:
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
 
+        bh = BlackHole(1)
+
         start = time.time()
         dt = 0
 
         while not self.window_should_close(window):
             self.update()
-
-            print(render_mask)
 
             accelerations = {}
             for body in range(n_body):
@@ -250,6 +248,23 @@ class App:
                 s[body] = v[body] * dt + s[body]
 
                 render_calls[body].draw(s[body])
+            bh.draw([0, 0, 0], start)
+
+            imgui.new_frame()
+            imgui.begin("The Force Awakens")
+
+            if dt:
+                imgui.text(f"{1/dt:.2f} fps")
+
+            imgui.spacing()
+            imgui.spacing()
+
+            imgui.text("Planets")
+
+            imgui.end()
+            imgui.render()
+            imgui_impl.process_inputs()
+            imgui_impl.render(imgui.get_draw_data())
 
             glfw.swap_buffers(window)
             glfw.poll_events()
