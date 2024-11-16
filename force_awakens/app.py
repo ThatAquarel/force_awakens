@@ -188,14 +188,15 @@ class App:
         m = np.random.randint(10, 30, n_body)
         # m = np.array([3,4,5,6,7,12,2], dtype=np.float32)
         a = np.zeros((n_body, 3), dtype=np.float32)
+        a_sum = np.zeros((n_body, 3), dtype=np.float32)
         v = np.random.randint(-1, 1, (n_body, 3)).astype(float)
         s = np.random.randint(-10, 10, (n_body, 3)).astype(float)
 
         render_calls = [Planet(r * 0.001) for r in m]
-        render_mask = np.zeros(n_body, dtype=bool)
+        mask = np.zeros(n_body, dtype=bool)
 
         for i in range(wanted):
-            render_mask[i] = True
+            mask[i] = True
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
@@ -208,15 +209,13 @@ class App:
         while not self.window_should_close(window):
             self.update()
 
-            accelerations = {}
-            for body in range(n_body):
-                accelerations[body] = a[body]
+            a_sum[:] = a
 
             for body in range(n_body):
                 for j in range(n_body):
                     if j == body:
                         continue
-                    if not render_mask[j]:
+                    if not mask[j]:
                         continue
 
                     if (np.abs(s[body] - s[j]) < 0.05).all():
@@ -224,7 +223,7 @@ class App:
                         a[body] += a[j]
                         v[body] += v[j]
 
-                        render_mask[j] = False
+                        mask[j] = False
                     else:
                         m_a = m[body]
                         F_a = np.zeros(3, dtype=np.float32)
@@ -237,16 +236,15 @@ class App:
                         Fg = G * m_a * m_b / d**2
 
                         F_a += ds / d * Fg
-                        accelerations[body] += F_a
+                        a_sum[body] += F_a
+
+            a[mask] = a_sum[mask] / m[mask, np.newaxis]
+            v[mask] = a[mask] * dt + v[mask]
+            s[mask] = v[mask] * dt + s[mask]
 
             for body in range(n_body):
-                if not render_mask[body]:
+                if not mask[body]:
                     continue
-
-                a[body] = accelerations[body] / m_a
-                v[body] = a[body] * dt + v[body]
-                s[body] = v[body] * dt + s[body]
-
                 render_calls[body].draw(s[body])
             bh.draw([0, 0, 0], start)
 
