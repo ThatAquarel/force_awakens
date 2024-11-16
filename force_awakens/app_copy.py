@@ -9,7 +9,7 @@ from imgui.integrations.glfw import GlfwRenderer
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-from force_awakens.graphics.draw import BlackHole, Planet
+from force_awakens.graphics.draw import BlackHole, Planet, Background
 
 last_call = time.time()
 
@@ -42,7 +42,7 @@ class App:
         self.pan_x, self.pan_y = 0.0, 0.0
         self.last_x, self.last_y = 0.0, 0.0
         self.dragging, self.panning = False, False
-        self.zoom_level = 1.0
+        self.zoom_level = 20.0
         self.view_left, self.view_right = 0, 0
         self._actions = []
 
@@ -196,7 +196,7 @@ class App:
 
         self.draw_axes()
 
-    def rendering_loop(self, window, imgui_impl, G=6.6743e-2, wanted=1):
+    def rendering_loop(self, window, imgui_impl, G=6.6743e-2, wanted=20):
         global mask
         # global v
         # global s
@@ -205,7 +205,11 @@ class App:
         a = np.zeros((n_body, 3), dtype=np.float32)
         a_sum = np.zeros((n_body, 3), dtype=np.float32)
         v = np.random.randint(-1, 1, (n_body, 3)).astype(float)
-        s = np.random.randint(-10, 10, (n_body, 3)).astype(float)
+        s = np.random.randint(-30, 30, (n_body, 3)).astype(float)
+
+        m[0] = 800
+        v[0] = np.array([0,0,0])
+        s[0] = np.array([0,0,0])
 
         def planet_adder(window, button, action, mods):
             global mask
@@ -267,25 +271,13 @@ class App:
                     v[i] = xyz_velocity_vector[:-1]
                     s[i] = np.array([x, y, 0])
             #new_mask = new_mask[::-1]
-            mask = new_mask
-
-            # print(tx)
-            # print(ty)
-            # print(tz)
-            # print(rx)
-            # print(rx)
-            # print(camera_vector)
-            # print(camera_transformation_on_point)
-            # print(xyz_velocity_vector)
-            # print(xyz_velocity_vector[:-1])
-            # print(v[i])
-            
+            mask = new_mask            
             
             last_call = time.time()
 
         self._actions.append(planet_adder)
 
-        render_calls = [Planet(r * 0.01) for r in m]
+        render_calls = [Planet(r * 0.01) for r in m if r != 0]
         # mask = np.zeros(n_body, dtype=bool)
 
         for i in range(wanted):
@@ -295,13 +287,17 @@ class App:
         glEnable(GL_MULTISAMPLE)
         glEnable(GL_POINT_SMOOTH)
 
-        bh = BlackHole(1)
+        bh = BlackHole(1, s[0])
+
 
         start = time.time()
+        background = Background(s[0])
         dt = 0
 
         while not self.window_should_close(window):
             self.update()
+
+            background.draw()
 
             a_sum[:] = a
 
@@ -331,6 +327,8 @@ class App:
 
                         F_a += ds / d * Fg
                         a_sum[body] += F_a
+                
+
 
             a[mask] = a_sum[mask] / m[mask, np.newaxis]
             v[mask] = a[mask] * dt + v[mask]
@@ -339,8 +337,9 @@ class App:
             for body in range(n_body):
                 if not mask[body]:
                     continue
-                render_calls[body].draw(s[body])
-            bh.draw([0, 0, 0], start)
+                if body != 0:
+                    render_calls[body].draw(s[body])
+            bh.draw(s[0], start)
 
             imgui.new_frame()
             imgui.begin("The Force Awakens")
@@ -360,6 +359,9 @@ class App:
 
             glfw.swap_buffers(window)
             glfw.poll_events()
+
+            v[0] = 0
+            s[0] = 0
 
             current = time.time()
             dt = current - start
