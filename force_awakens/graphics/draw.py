@@ -225,20 +225,27 @@ class Planet:
 
 
 class BlackHole:
-    def __init__(self, r, res=25, n_stars=4096):
+    def __init__(self, r, res=25, n_stars=32768):
         self.r = r
         self.vertices = generate_sphere_vertices(r, res, res)
         self.vertices = self.vertices.reshape((-1, 3))
 
         self.n_stars = n_stars
         stars = np.random.random((n_stars, 3)) * 5 - 2.5
-        self.stars = (np.sin(stars) - 1.1) * np.tan(stars)
-        self.dist = np.linalg.norm(self.stars, axis=1)
+        stars = (np.sin(stars) - 1.1) * np.tan(stars)
 
         colors = np.random.random((n_stars, 3))
-        self.colors = colors + 0.5 * (1 - colors)
+        colors = colors + 0.5 * (1 - colors)
+            
+        self.data = np.empty((n_stars, 6), dtype=np.float32)
+        self.data[:, :3] = stars
+        self.data[:, 3:] = colors
 
-        # self.data = np.hstack((stars, colors))
+        self.stride = self.data.itemsize * 6
+
+        self.dist = np.linalg.norm(stars, axis=1)
+        self.rot_mat = self._build_rot()
+
         self.point_vbo = create_vbo(self._get_vbo_data(0))
 
     def _draw_center(self, r, s):
@@ -250,59 +257,43 @@ class BlackHole:
 
         glEnd()
 
-    def _build_rot(self, rx):
-        mat = np.zeros((len(rx), 3, 3))
-        mat[:, 0, 0] = 1
-        mat[:, 1, 1] = np.cos(rx)
-        mat[:, 1, 2] = np.sin(rx)
-        mat[:, 2, 1] = -np.sin(rx)
-        mat[:, 2, 2] = np.cos(rx)
+    def _build_rot(self):
+        rx = 1 / self.dist**2 * (1/30)
 
-        return mat
+        rot_mat = np.zeros((self.n_stars, 3, 3), dtype=np.float32)
+        rot_mat[:, 0, 0] = 1
+        rot_mat[:, 1, 1] = np.cos(rx)
+        rot_mat[:, 1, 2] = np.sin(rx)
+        rot_mat[:, 2, 1] = -np.sin(rx)
+        rot_mat[:, 2, 2] = np.cos(rx)
+
+        return rot_mat
 
     def _get_vbo_data(self, t):
-        rx = 1 / self.dist**2 * t
-        mat = self._build_rot(rx)
-        # stars = np.matmul(mat, self.stars[:, :, np.newaxis]).reshape((-1, 3))
-        stars = mat @ self.stars[:, :, np.newaxis]
-        stars = stars.squeeze(-1)
-
-        return np.hstack((stars, self.colors)).flatten()
+        stars = self.rot_mat @ self.data[:, :3, np.newaxis]
+        self.data[:, :3] = stars.squeeze(-1)
+    
+        return self.data
 
     def draw(self, s, t):
+        glDepthMask(GL_FALSE);
         glBindBuffer(GL_ARRAY_BUFFER, self.point_vbo)
+
         glEnableClientState(GL_VERTEX_ARRAY)
-        glVertexPointer(3, GL_FLOAT, 24, None)
+        glVertexPointer(3, GL_FLOAT, self.stride, ctypes.c_void_p(0))
         glEnableClientState(GL_COLOR_ARRAY)
-        glColorPointer(3, GL_FLOAT, 24, ctypes.c_void_p(12))
-        glPointSize(2.0)
+        glColorPointer(3, GL_FLOAT, self.stride, ctypes.c_void_p(self.stride // 2))
+
+        glPointSize(1.0)
         glDrawArrays(GL_POINTS, 0, self.n_stars)
+        glDrawArrays(GL_POINTS, 0, 3)
 
         glDisableClientState(GL_VERTEX_ARRAY)
         glDisableClientState(GL_COLOR_ARRAY)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
+        glDepthMask(GL_TRUE);
 
         update_vbo(self.point_vbo, self._get_vbo_data(t))
-        # glPointSize(1.0)
-        # glBegin(GL_POINTS)
-
-        # stars = self.stars * self.r * 2.2
-
-        # for d, star, color in zip(self.distances, stars, self.colors):
-        #     rx = 1 / d**2 * t
-
-        #     mat = np.array(
-        #         [
-        #             [1, 0, 0],
-        #             [0, np.cos(rx), np.sin(rx)],
-        #             [0, -np.sin(rx), np.cos(rx)],
-        #         ]
-        #     )
-
-        #     glColor4f(*color, 0.05)
-        #     glVertex3f(*star @ mat @ T)
-
-        # glEnd()
 
         glClear(GL_DEPTH_BUFFER_BIT)
-        # self._draw_center(self.r, s)
+        self._draw_center(self.r, s)
