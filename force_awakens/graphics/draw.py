@@ -7,8 +7,7 @@ import importlib
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-import force_awakens.graphics
-from force_awakens.graphics.render import create_vbo, update_vbo, load_texture
+from force_awakens.graphics.render import create_vbo, update_vbo
 
 T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 

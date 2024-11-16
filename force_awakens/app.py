@@ -1,7 +1,10 @@
+import io
 import time
+import importlib.resources
 
 import glfw
 import numpy as np
+import pandas as pd
 
 import imgui
 from imgui.integrations.glfw import GlfwRenderer
@@ -9,7 +12,9 @@ from imgui.integrations.glfw import GlfwRenderer
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
+import force_awakens.mechanics
 from force_awakens.graphics.draw import Background, BlackHole, Planet
+from force_awakens.graphics.render import load_texture_simple
 from force_awakens.mechanics.mechanics import add_body
 
 
@@ -43,7 +48,31 @@ class App:
         self.window = self.window_init(window_size, name)
         self.imgui_impl = self.init_imgui(self.window)
 
+        self._load_planets()
         self.rendering_loop(self.window, self.imgui_impl)
+
+
+    def _load_planets(self):
+        self.items = []
+
+        binary = importlib.resources.read_binary(
+            force_awakens.mechanics, "elements_in_space.csv"
+        )
+        df = pd.read_csv(io.BytesIO(binary))
+        for _, row in df.iterrows():
+            name = row["name_of_the_planet_stars"]
+            type_ = row["type_of_celestial_body"]
+            mass = row["masses_in_kg"]
+
+            img_file = row["img_file"]
+
+            if not pd.isna(img_file):
+                img_id, width, height = load_texture_simple(img_file)
+            else:
+                continue
+            width, height = width // 2, height // 2
+
+            self.items.append([name, type_, mass, (img_id, width, height)])
 
     def window_init(self, window_size, name):
         if not glfw.init():
@@ -185,8 +214,15 @@ class App:
 
         # self.draw_axes()
 
-    def rendering_loop(self, window, imgui_impl, n_body=32, G=6.6743e-2, wanted=10, black_hole_r=1,
-                       decay_max=100,):
+    def rendering_loop(
+        self,
+        window,
+        imgui_impl,
+        n_body=32,
+        G=6.6743e-2,
+        wanted=10,
+        black_hole_r=1,
+    ):
         m = np.random.randint(10, 30, n_body)
         a = np.zeros((n_body, 3), dtype=np.float32)
         a_sum = np.zeros((n_body, 3), dtype=np.float32)
@@ -304,7 +340,33 @@ class App:
             imgui.spacing()
             imgui.spacing()
 
-            imgui.text("Planets")
+            if imgui.begin_table("Please chose your celestial body !", 2):
+                imgui.table_setup_column("Images")
+                imgui.table_setup_column("Infos")
+                imgui.table_headers_row()
+
+                selection = np.zeros(len(self.items), dtype=bool)
+
+                for i, item in enumerate(self.items):
+                    imgui.table_next_row()
+                    imgui.spacing()
+                    imgui.table_next_column()
+                    name, type_, mass, (id,width,height) = item
+                    imgui.image(id,width,height)
+
+                    imgui.table_next_column()
+
+                    selection[i] = imgui.button(f"Select {name}")
+                    imgui.text(name)
+                    imgui.text(f"  Mass: {mass} kg")
+                    imgui.text(f"  Type: {type_}")
+                    imgui.separator()
+
+                if np.any(selection):
+                    selected_i = np.argmax(selection)
+                    print(self.items[selected_i][0])
+
+                imgui.end_table()
 
             imgui.end()
             imgui.render()
