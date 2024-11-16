@@ -200,6 +200,7 @@ class App:
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
+        glEnable(GL_POINT_SMOOTH)
 
         bh = BlackHole(1)
 
@@ -246,7 +247,7 @@ class App:
                 if not mask[body]:
                     continue
                 render_calls[body].draw(s[body])
-            # bh.draw([0, 0, 0], start)
+            bh.draw([0, 0, 0], start)
 
             imgui.new_frame()
             imgui.begin("The Force Awakens")
