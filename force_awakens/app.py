@@ -186,14 +186,15 @@ class App:
         # self.draw_axes()
 
     def rendering_loop(self, window, imgui_impl, n_body=32, G=6.6743e-2, wanted=10, black_hole_r=1,
-                       decay_max=5,):
+                       decay_max=100,):
         m = np.random.randint(10, 30, n_body)
         a = np.zeros((n_body, 3), dtype=np.float32)
         a_sum = np.zeros((n_body, 3), dtype=np.float32)
         v = np.random.randint(-1, 1, (n_body, 3)).astype(float)
         s = np.random.randint(-10, 10, (n_body, 3)).astype(float)
 
-        decay_time = np.zeros(n_body, dtype=np.float32)
+        decaying = np.zeros(n_body, dtype=bool)
+        decay = np.ones(n_body, dtype=np.float32)
 
         m[0] = 800
         v[0] = 0
@@ -207,11 +208,12 @@ class App:
         mask = np.zeros(n_body, dtype=bool)
         for i in range(wanted):
             mask[i] = True
-        mask_compute = mask.copy()
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
         glEnable(GL_POINT_SMOOTH)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        glEnable(GL_BLEND)
 
         background = Background()
 
@@ -230,11 +232,6 @@ class App:
             a_sum[:] = a
 
             for body in range(n_body):
-                # if not mask_compute[body]:
-                #     if (time.time() - decay_time[body]) > decay_max:
-                #         mask[body] = False
-                #         decay_time[body] = 0
-
                 for j in range(n_body):
                     if j == body:
                         continue
@@ -262,15 +259,18 @@ class App:
                         F_a += ds / d * Fg
                         a_sum[body] += F_a
 
-                    # if body != 0 and np.linalg.norm(s_a) < black_hole_r:
-                    #     mask_compute[body] = False
-                    #     s[body] = 0
-                    #     v[body] = 0
-                    #     decay_time[body] = time.time()
+                    if body != 0 and np.linalg.norm(s_a) < black_hole_r:
+                        decaying[body] = True
 
+                if decaying[body]:
+                    decay[body] *= 0.95
+                    v[body] = 0
+                    if decay[body] < 0.05:
+                        decaying[body] = False
+                        decay[body] = 1.0
+                        mask[body] = False
 
-            # m_phys = mask_compute & mask
-            m_phys = mask
+            m_phys = mask & (~decaying)
             a[m_phys] = a_sum[m_phys] / m[m_phys, np.newaxis]
             v[m_phys] = a[m_phys] * dt + v[m_phys]
             s[m_phys] = v[m_phys] * dt + s[m_phys]
@@ -282,7 +282,7 @@ class App:
             for body in range(n_body):
                 if not mask[body]:
                     continue
-                render_calls[body].draw(s[body], start)
+                render_calls[body].draw(s[body], start, decay[body])
 
             imgui.new_frame()
             imgui.begin("The Force Awakens")
@@ -291,7 +291,6 @@ class App:
                 add_body(
                     render_calls,
                     mask,
-                    mask_compute,
                     s,
                     v,
                     self.zoom_level,

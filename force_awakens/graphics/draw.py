@@ -218,19 +218,20 @@ class Planet:
 
         glEnd()
 
-    def draw(self, s, _):
+    def draw(self, s, _, decay):
         if self.intro:
             scalar = (self.prev_n / (self.s_cache - 1)) ** 3
         else:
-            scalar = 1
-        self._draw_sphere(scalar, self.r * scalar, s, 1.0)
+            scalar = decay
+        if decay == 1:
+            self._draw_sphere(scalar, self.r * scalar, s, 1.0)
 
         if self.prev_n < (self.s_cache - 1):
             uniform_points = np.random.uniform(-1, 1, (100, 3))
             uniform_points = np.tan(uniform_points)
             glPointSize(2.0)
             glBegin(GL_POINTS)
-            glColor3f(1-scalar,0, 1-scalar)
+            glColor4f(1-scalar,0, 1-scalar, decay)
             for point in uniform_points:
                 glVertex3f(*(point + s) @ T)
             glEnd()
@@ -300,7 +301,7 @@ class BlackHole:
     
         return self.data
 
-    def draw(self, s, t):
+    def draw(self, s, t, decay):
         glDepthMask(GL_FALSE);
         glBindBuffer(GL_ARRAY_BUFFER, self.point_vbo)
 
