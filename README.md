@@ -5,9 +5,9 @@
 
 Just students trying to make science, especially it's more advanced topics more approachable for everyone.
 
-Tian Yi Xia1, Thomas Deleuze-Bisson1, Evan Parasol1
+Tian Yi Xia, Thomas Deleuze-Bisson, Evan Parasol
 
-1Dawson College, Montréal
+Dawson College, Montréal
 
 ![image](https://github.com/user-attachments/assets/3cb84f17-91aa-46a1-8e5e-d2c0823da192)
 
@@ -25,6 +25,8 @@ We've designed, as mentionned earlier, a sandbox where it is possible for users 
 Now let's get into the interesting part; how the project works ! First, lets deconstruct it into a few steps... 1. Exoplanets scouting, gathering of data and accurate representation of celestial bodies, 2. Development of an 3d gravity neutral envrionment to oberve the behavior of planets using OpenGUI, 3. Implementation of matrixes to evaluate the "planet throwing" feature of our project using linear algebra.
 
 # 1. Data gathering
+
+We started by looking on various NASA websites for exoplanets and information about them, such as mass, radius, and distance from the earth. Then we began researching the various libraries that we would plan to use in the making of our project, such as openGL, glfw, and imgui. Finally, we researched the information that would be needed to simulate gravity between celestial bodies, as well as attempting to figure out methods of properly displaying black holes.
 
 # 2. Creation of the three dimensionnal environment
 
