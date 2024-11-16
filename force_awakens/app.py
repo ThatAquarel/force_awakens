@@ -9,6 +9,8 @@ from imgui.integrations.glfw import GlfwRenderer
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
+from force_awakens.graphics.draw import Planet
+
 
 T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 
@@ -201,6 +203,10 @@ class App:
         )
         s = np.array([[0, 0, 0], [0, 2, 0], [0, 0, 2], [2, 0, 0], [2, 2, 0], [2, 0, 2], [0, 2, 2]], dtype=np.float32)
 
+        radius = [1,2,3,4,5,6,7]
+        render_calls = [Planet(r) for r in radius]
+        render_mask = np.ones(n_body, dtype=bool)
+
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
 
@@ -216,20 +222,18 @@ class App:
             print(accelerations)
 
             for body in range(n_body):
-                others = [n for n in range(n_body) if n != body]
+                for j in range(n_body):
+                    if j == body:
+                        continue
+                    if not render_mask[j]:
+                        continue
 
-                for i, j in enumerate(others):
                     if (np.abs(s[body] - s[j]) < 0.05).all():
                         m[body] = m[body] + m[j]
                         a[body] += a[j]
                         v[body] += v[j]
-                        m[j] = 0
-                        a[j] = np.zeros(3, dtype=np.float32)
-                        v[j] = np.zeros(3, dtype=np.float32)
-                        s[j] = np.zeros(3, dtype=np.float32)
-                        #others = others.pop(i)
 
-
+                        render_mask[j] = False
                     else:
                         m_a = m[body]
                         F_a = np.zeros(3, dtype=np.float32)
@@ -243,20 +247,20 @@ class App:
 
                         F_a += ds / d * Fg
                         accelerations[body] += F_a
-                            
+
             for body in range(n_body):
+                if not render_mask[body]:
+                    continue
 
-                if m_a != 0:
-                    a[body] = accelerations[body] / m_a
-                    v[body] = a[body] * dt + v[body]
-                    s[body] = v[body] * dt + s[body]
+                a[body] = accelerations[body] / m_a
+                v[body] = a[body] * dt + v[body]
+                s[body] = v[body] * dt + s[body]
 
-                if m[body] != 0:
-                    glPointSize(m[body] * 10)
-                    glBegin(GL_POINTS)
-                    glColor3f(1, 1, 1)
-                    glVertex3f(*s[body] @ T)
-                    glEnd()
+                glPointSize(m[body] * 10)
+                glBegin(GL_POINTS)
+                glColor3f(1, 1, 1)
+                glVertex3f(*s[body] @ T)
+                glEnd()
 
             glfw.swap_buffers(window)
             glfw.poll_events()
