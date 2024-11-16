@@ -3,7 +3,7 @@
 
 # Authors : 
 
-Just students trying to make science, especially it's more advanced topics more approachable to everyone.
+Just students trying to make science, especially it's more advanced topics more approachable for everyone.
 
 Tian Yi Xia1, Thomas Deleuze-Bisson1, Evan Parasol1
 
