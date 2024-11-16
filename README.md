@@ -32,6 +32,10 @@ We started by looking on various NASA websites for exoplanets and information ab
 
 # 3. Implementation of linear algebra to solve an interesting problem
 
+# Contact
+
+
+
 # References
 
 1. Rohlfs, M., & Pohl, T. (2009). Quantum dots in semiconductor nanostructures: From basic physics to quantum technologies. Proceedings of the National Academy of Sciences, 106(47), 20129-20134. https://doi.org/10.1073/pnas.0910927107
