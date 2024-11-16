@@ -37,7 +37,7 @@ class App:
         self.pan_x, self.pan_y = 0.0, 0.0
         self.last_x, self.last_y = 0.0, 0.0
         self.dragging, self.panning = False, False
-        self.zoom_level = 1.0
+        self.zoom_level = 20.0
         self.view_left, self.view_right = 0, 0
 
         self.window = self.window_init(window_size, name)
