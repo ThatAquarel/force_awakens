@@ -18,6 +18,7 @@ T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 _axes_y = np.mgrid[0:2, 0:1:11j, 0:1].T.reshape((-1, 3)) - [0.5, 0.5, 0.0]
 _axes_x = _axes_y[:, [1, 0, 2]]
 
+render_mask = np.zeros(64, dtype=bool)
 class App:
     def __init__(
         self,
@@ -41,7 +42,7 @@ class App:
         self.window = self.window_init(window_size, name)
         self.imgui_impl = self.init_imgui(self.window)
 
-        self.rendering_loop(self.window, self.imgui_impl)
+        self.rendering_loop(self.window, self.imgui_impl, self.mouse_button_callback)
 
     def window_init(self, window_size, name):
         if not glfw.init():
@@ -82,6 +83,8 @@ class App:
         elif button == glfw.MOUSE_BUTTON_MIDDLE:
             self.dragging = press
             self.panning = press
+        elif button == glfw.MOUSE_BUTTON_RIGHT:
+            self.planet_adder()
 
     def cursor_pos_callback(self, window, xpos, ypos):
         if self.imgui_impl != None and imgui.get_io().want_capture_mouse:
@@ -183,17 +186,12 @@ class App:
 
         self.draw_axes()
     
-    def planet_adder(render_mask, self, window, button, action, mods):
-        if self.imgui_impl != None and imgui.get_io().want_capture_mouse:
-            return
+    def planet_adder(self):
+        global render_mask
+        new_render_mask = np.array([True if j == True else True if render_mask[i-1] == True else False for i, j in enumerate(render_mask)])
+        render_mask = new_render_mask
 
-        press = action == glfw.PRESS
-
-        if button == glfw.MOUSE_BUTTON_RIGHT:
-            new_render_mask = np.array([True if j == True else True if render_mask[i-1] == True else False for i, j in enumerate(render_mask)])
-            return new_render_mask
-
-    def rendering_loop(self, window, imgui_impl, n_body=64, G=6.6743e-2, wanted=10):
+    def rendering_loop(self, window, imgui_impl, button, n_body=64, G=6.6743e-2, wanted=10):
 
         m = np.random.randint(10, 30, n_body)
         #m = np.array([3,4,5,6,7,12,2], dtype=np.float32)
@@ -203,11 +201,12 @@ class App:
 
         #radius = [1,2,3,4,5,6,7]
         render_calls = [Planet(r * 0.01) for r in m]
-        render_mask = np.zeros(n_body, dtype=bool)
+        #render_mask = np.zeros(n_body, dtype=bool)
 
         for i in range(wanted):
             render_mask[i] = True
         
+        print(render_mask)
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
@@ -218,7 +217,6 @@ class App:
         while not self.window_should_close(window):
             self.update()
             
-            render_mask = self.planet_adder(render_mask)
             print(render_mask)
 
             accelerations = {}
