@@ -162,7 +162,7 @@ class App:
 
     def update(self):
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glClearColor(0.86, 0.87, 0.87, 1.0)
+        glClearColor(0.05, 0.05, 0.05, 1.0)
 
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
@@ -171,8 +171,8 @@ class App:
             self.view_right * self.zoom_level,
             -self.zoom_level,
             self.zoom_level,
-            -32,
-            32,
+            -128,
+            128,
         )
 
         glMatrixMode(GL_MODELVIEW)
@@ -193,10 +193,8 @@ class App:
         v = np.random.randint(-1, 1, (n_body, 3)).astype(float)
         s = np.random.randint(-3, 3, (n_body, 3)).astype(float)
 
-        
-
-        #radius = [1,2,3,4,5,6,7]
-        #render_calls = [Planet(r) for r in radius]
+        radius = [1,2,3,4,5,6,7]
+        render_calls = [Planet(r * 0.01) for r in radius]
         render_mask = np.ones(n_body, dtype=bool)
 
         glEnable(GL_DEPTH_TEST)
@@ -248,11 +246,13 @@ class App:
                 v[body] = a[body] * dt + v[body]
                 s[body] = v[body] * dt + s[body]
 
-                glPointSize(m[body] * 10)
-                glBegin(GL_POINTS)
-                glColor3f(1, 1, 1)
-                glVertex3f(*s[body] @ T)
-                glEnd()
+                render_calls[body].draw(s[body])
+
+                # glPointSize(m[body] * 10)
+                # glBegin(GL_POINTS)
+                # glColor3f(1, 1, 1)
+                # glVertex3f(*s[body] @ T)
+                # glEnd()
 
             glfw.swap_buffers(window)
             glfw.poll_events()
