@@ -183,7 +183,14 @@ class App:
 
         self.draw_axes()
     
+    def planet_adder(self, window, button, action, mods):
+        if self.imgui_impl != None and imgui.get_io().want_capture_mouse:
+            return
 
+        press = action == glfw.PRESS
+
+        if button == glfw.MOUSE_BUTTON_RIGHT:
+            pass
 
     def rendering_loop(self, window, imgui_impl, n_body=64, G=6.6743e-2, wanted=10):
 
