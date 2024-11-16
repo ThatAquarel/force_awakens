@@ -1,11 +1,14 @@
+import importlib.resources
+import io
 import math
 import numpy as np
+import importlib
 
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-from force_awakens.graphics.render import create_vbo, update_vbo
-
+import force_awakens.graphics
+from force_awakens.graphics.render import create_vbo, update_vbo, load_texture
 
 T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 
@@ -297,3 +300,55 @@ class BlackHole:
 
         glClear(GL_DEPTH_BUFFER_BIT)
         self._draw_center(self.r, s)
+
+
+class Background:
+    def __init__(self, n_stars=32768):
+        self.n_stars = n_stars
+
+        stars = self._radial()
+
+        colors = np.random.random((n_stars, 3))
+        # colors = colors + 0.2 * (1 - colors)
+        # colors = colors + 0.2 * (1 - colors)
+
+        self.data = np.empty((n_stars, 6), dtype=np.float32)
+        self.data[:, :3] = stars
+        self.data[:, 3:] = colors
+
+        self.stride = self.data.itemsize * 6
+        self.point_vbo = create_vbo(self.data)
+
+    def _radial(self):
+        stars = np.empty((self.n_stars, 3))
+
+        theta = np.random.uniform(0, np.pi, self.n_stars)
+        phi = np.random.uniform(0, np.pi, self.n_stars)
+        r = np.random.uniform(0, 0.5, self.n_stars)
+        r = np.tan(r * 100 -50) * 1024
+
+        stars[:, 0] = r * np.sin(theta) * np.cos(phi)
+        stars[:, 1] = r * np.sin(theta) * np.sin(phi)
+        stars[:, 2] = r * np.cos(theta)
+
+        return stars
+
+    def draw(self):
+        glDepthMask(GL_FALSE);
+        glBindBuffer(GL_ARRAY_BUFFER, self.point_vbo)
+
+        glEnableClientState(GL_VERTEX_ARRAY)
+        glVertexPointer(3, GL_FLOAT, self.stride, ctypes.c_void_p(0))
+        glEnableClientState(GL_COLOR_ARRAY)
+        glColorPointer(3, GL_FLOAT, self.stride, ctypes.c_void_p(self.stride // 2))
+
+        glPointSize(1.0)
+        glDrawArrays(GL_POINTS, 0, self.n_stars)
+        glDrawArrays(GL_POINTS, 0, 3)
+
+        glDisableClientState(GL_VERTEX_ARRAY)
+        glDisableClientState(GL_COLOR_ARRAY)
+        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        glDepthMask(GL_TRUE);
+
+        glClear(GL_DEPTH_BUFFER_BIT)
