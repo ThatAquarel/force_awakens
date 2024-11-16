@@ -192,10 +192,6 @@ class Tars:
         glEnd()
 
 
-thetas = np.linspace(0, 2*np.pi, 100)
-circle_vertices = np.hstack((np.cos(thetas), np.sin(thetas)))
-
-
 class Planet:
     def __init__(self, r, res=10, s_cache=256):
         self.planet = generate_sphere_vertices(1, res, res)
@@ -207,9 +203,9 @@ class Planet:
 
         self.r = r
 
-    def _draw_sphere(self, scalar, r, s, alpha):
+    def _draw_sphere(self, r, s, alpha):
         glBegin(GL_TRIANGLES)
-        glColor4f(1, scalar, 1, alpha)
+        glColor4f(1, 1, 1, alpha)
         pos = (self.planet * r + s) @ T
         for v in pos:
             glVertex3f(*v)
@@ -217,21 +213,11 @@ class Planet:
         glEnd()
 
     def draw(self, s):
-        scalar = (self.prev_n / (self.s_cache - 1)) ** 3
-        self._draw_sphere(scalar, self.r * scalar, s, 1.0)
-
-        if self.prev_n < (self.s_cache - 1):
-            uniform_points = np.random.uniform(-1, 1, (100, 3))
-            uniform_points = np.tan(uniform_points)
-            glBegin(GL_POINTS)
-            glColor3f(1-scalar,0, 1-scalar)
-            for point in uniform_points:
-                glVertex3f(*(point + s) @ T)
-            glEnd()
+        self._draw_sphere(self.r, s, 1.0)
 
         glLineWidth(1.0)
         glBegin(GL_LINE_STRIP)
-        glColor3f(0.5, 0.5 * scalar, 0.5)
+        glColor3f(0.5, 0.5, 0.5)
         for prev_s in self.prev_s[: self.prev_n : 4]:
             glVertex3f(*prev_s @ T)
         glEnd()
@@ -242,7 +228,7 @@ class Planet:
 
 
 class BlackHole:
-    def __init__(self, r, res=25, n_stars=32768):
+    def __init__(self, r, s, res=25, n_stars=32768):
         self.r = r
         self.vertices = generate_sphere_vertices(r, res, res)
         self.vertices = self.vertices.reshape((-1, 3))
@@ -263,7 +249,7 @@ class BlackHole:
         self.dist = np.linalg.norm(stars, axis=1)
         self.rot_mat = self._build_rot()
 
-        self.point_vbo = create_vbo(self._get_vbo_data(0))
+        self.point_vbo = create_vbo(self._get_vbo_data(s, 0))
 
     def _draw_center(self, r, s):
         glBegin(GL_TRIANGLES)
@@ -286,9 +272,9 @@ class BlackHole:
 
         return rot_mat
 
-    def _get_vbo_data(self, t):
+    def _get_vbo_data(self, s, t):
         stars = self.rot_mat @ self.data[:, :3, np.newaxis]
-        self.data[:, :3] = stars.squeeze(-1)
+        self.data[:, :3] = stars.squeeze(-1) + s
     
         return self.data
 
@@ -310,19 +296,21 @@ class BlackHole:
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glDepthMask(GL_TRUE);
 
-        update_vbo(self.point_vbo, self._get_vbo_data(t))
+        update_vbo(self.point_vbo, self._get_vbo_data(s, t))
 
         glClear(GL_DEPTH_BUFFER_BIT)
         self._draw_center(self.r, s)
 
 
 class Background:
-    def __init__(self, n_stars=32768):
+    def __init__(self, s, n_stars=32768):
         self.n_stars = n_stars
 
-        stars = self._radial()
+        stars = self._radial(s)
 
         colors = np.random.random((n_stars, 3))
+        # colors = colors + 0.2 * (1 - colors)
+        # colors = colors + 0.2 * (1 - colors)
 
         self.data = np.empty((n_stars, 6), dtype=np.float32)
         self.data[:, :3] = stars
@@ -331,7 +319,7 @@ class Background:
         self.stride = self.data.itemsize * 6
         self.point_vbo = create_vbo(self.data)
 
-    def _radial(self):
+    def _radial(self, s):
         stars = np.empty((self.n_stars, 3))
 
         theta = np.random.uniform(0, np.pi, self.n_stars)
@@ -339,9 +327,9 @@ class Background:
         r = np.random.uniform(0, 0.5, self.n_stars)
         r = np.tan(r * 100 -50) * 1024
 
-        stars[:, 0] = r * np.sin(theta) * np.cos(phi)
-        stars[:, 1] = r * np.sin(theta) * np.sin(phi)
-        stars[:, 2] = r * np.cos(theta)
+        stars[:, 0] = r * np.sin(theta) * np.cos(phi) + s[0]
+        stars[:, 1] = r * np.sin(theta) * np.sin(phi) + s[1]
+        stars[:, 2] = r * np.cos(theta) + s[2]
 
         return stars
 

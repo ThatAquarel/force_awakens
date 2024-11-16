@@ -9,8 +9,7 @@ from imgui.integrations.glfw import GlfwRenderer
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-from force_awakens.graphics.draw import Background, BlackHole, Planet
-from force_awakens.mechanics.mechanics import add_body
+from force_awakens.graphics.draw import Planet
 
 
 T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
@@ -18,7 +17,6 @@ T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 
 _axes_y = np.mgrid[0:2, 0:1:11j, 0:1].T.reshape((-1, 3)) - [0.5, 0.5, 0.0]
 _axes_x = _axes_y[:, [1, 0, 2]]
-
 
 class App:
     def __init__(
@@ -37,7 +35,7 @@ class App:
         self.pan_x, self.pan_y = 0.0, 0.0
         self.last_x, self.last_y = 0.0, 0.0
         self.dragging, self.panning = False, False
-        self.zoom_level = 20.0
+        self.zoom_level = 1.0
         self.view_left, self.view_right = 0, 0
 
         self.window = self.window_init(window_size, name)
@@ -173,8 +171,8 @@ class App:
             self.view_right * self.zoom_level,
             -self.zoom_level,
             self.zoom_level,
-            -1024,
-            1024,
+            -128,
+            128,
         )
 
         glMatrixMode(GL_MODELVIEW)
@@ -183,107 +181,86 @@ class App:
         glRotatef(self.angle_x, 1.0, 0.0, 0.0)
         glRotatef(self.angle_y, 0.0, 1.0, 0.0)
 
-        # self.draw_axes()
+        self.draw_axes()
+    
 
-    def rendering_loop(self, window, imgui_impl, n_body=32, G=6.6743e-2, wanted=10):
-        m = np.random.randint(10, 30, n_body)
-        # m = np.array([3,4,5,6,7,12,2], dtype=np.float32)
-        a = np.zeros((n_body, 3), dtype=np.float32)
-        a_sum = np.zeros((n_body, 3), dtype=np.float32)
-        v = np.random.randint(-1, 1, (n_body, 3)).astype(float)
-        s = np.random.randint(-10, 10, (n_body, 3)).astype(float)
 
+    def rendering_loop(self, window, imgui_impl, max_bodies=64, G=6.6743e-2):
+
+        m = np.random.randint(1, 10, max_bodies)
+        a = np.zeros((max_bodies, 3), dtype=np.float32)
+        a_cumulative = np.zeros((max_bodies, 3), dtype=np.float32)
+        v = ((np.random.random([max_bodies, 3]))*1)*((np.random.randint(0, 1, 3) *2)-1)
+        s = np.random.randint(-3, 3, (max_bodies, 3)).astype(float)
+
+        n_body = 15
+
+        radius = [1,2,3,4,5,6,7]
+        radius = np.random.randint(1, 5, max_bodies)
+        # render_calls = [Planet(r * 0.01) for r in radius]
         render_calls = [Planet(r * 0.01) for r in m]
-        mask = np.zeros(n_body, dtype=bool)
-
-        for i in range(wanted):
-            mask[i] = True
+        render_mask = np.zeros(max_bodies, dtype=bool)
+        render_mask[0:n_body] = True
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
-        glEnable(GL_POINT_SMOOTH)
-
-        bh = BlackHole(1)
-
-        background = Background()
 
         start = time.time()
         dt = 0
 
         while not self.window_should_close(window):
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            glClearColor(0.05, 0.05, 0.05, 1.0)
-
             self.update()
-            background.draw()
 
-            self.draw_axes()
+            # accelerations = {}
+            # for body in range(max_bodies):
+            #     if not render_mask[body]:
+            #         accelerations[body] = a[body]
 
-            a_sum[:] = a
+            a_cumulative[:] = a
 
-            for body in range(n_body):
-                for j in range(n_body):
-                    if j == body:
-                        continue
-                    if not mask[j]:
-                        continue
+            for body in range(max_bodies):
+                if not render_mask[body]:
+                    for j in range(n_body):
+                        if j == body:
+                            continue
 
-                    if (np.abs(s[body] - s[j]) < 0.05).all():
-                        m[body] = m[body] + m[j]
-                        a[body] += a[j]
-                        v[body] += v[j]
-
-                        mask[j] = False
-                    else:
-                        m_a = m[body]
-                        F_a = np.zeros(3, dtype=np.float32)
-
-                        m_b = m[j]
                         s_a, s_b = s[body], s[j]
-
                         ds = s_b - s_a
                         d = np.linalg.norm(ds)
-                        Fg = G * m_a * m_b / d**2
+                        
+                        if d < 0.05:
+                            m[body] = m[body] + m[j]
+                            a[body] += a[j]
+                            v[body] += v[j]
+                            m[j] = 0
+                            a[j] = np.zeros(3, dtype=np.float32)
+                            v[j] = np.zeros(3, dtype=np.float32)
+                            s[j] = np.zeros(3, dtype=np.float32)
 
-                        F_a += ds / d * Fg
-                        a_sum[body] += F_a
+                            render_mask[j] = False
+                        else:
+                            F_a = np.zeros(3, dtype=np.float32)
 
-            a[mask] = a_sum[mask] / m[mask, np.newaxis]
-            v[mask] = a[mask] * dt + v[mask]
-            s[mask] = v[mask] * dt + s[mask]
+                            Fg = G * m[body] * m[j] / d**2
 
-            for body in range(n_body):
-                if not mask[body]:
+                            F_a += ds / d * Fg
+                            a_cumulative[body] += F_a
+
+            for body in range(max_bodies):
+                if not render_mask[body]:
                     continue
+
+                a[body] = a_cumulative[body] / m[body]
+                v[body] = a[body] * dt + v[body]
+                s[body] = v[body] * dt + s[body]
+
                 render_calls[body].draw(s[body])
-            bh.draw([0, 0, 0], start)
 
-            imgui.new_frame()
-            imgui.begin("The Force Awakens")
-
-            if imgui.button("ADD BODY"):
-                add_body(
-                    render_calls,
-                    mask,
-                    s,
-                    v,
-                    self.zoom_level,
-                    (self.pan_x, self.pan_y),
-                )
-
-            if dt:
-                imgui.text(f"{1/dt:.2f} fps")
-            imgui.text(f"{np.sum(mask)} bodies")
-
-            imgui.spacing()
-            imgui.spacing()
-
-            imgui.text("Planets")
-
-            imgui.end()
-            imgui.render()
-            imgui_impl.process_inputs()
-            imgui_impl.render(imgui.get_draw_data())
+                # glPointSize(m[body] * 10)
+                # glBegin(GL_POINTS)
+                # glColor3f(1, 1, 1)
+                # glVertex3f(*s[body] @ T)
+                # glEnd()
 
             glfw.swap_buffers(window)
             glfw.poll_events()
