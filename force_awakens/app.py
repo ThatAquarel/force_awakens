@@ -18,6 +18,7 @@ T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 _axes_y = np.mgrid[0:2, 0:1:11j, 0:1].T.reshape((-1, 3)) - [0.5, 0.5, 0.0]
 _axes_x = _axes_y[:, [1, 0, 2]]
 
+
 class App:
     def __init__(
         self,
@@ -182,24 +183,21 @@ class App:
         glRotatef(self.angle_y, 0.0, 1.0, 0.0)
 
         self.draw_axes()
-    
-
 
     def rendering_loop(self, window, imgui_impl, n_body=64, G=6.6743e-2, wanted=10):
 
         m = np.random.randint(10, 30, n_body)
-        #m = np.array([3,4,5,6,7,12,2], dtype=np.float32)
+        # m = np.array([3,4,5,6,7,12,2], dtype=np.float32)
         a = np.zeros((n_body, 3), dtype=np.float32)
         v = np.random.randint(-1, 1, (n_body, 3)).astype(float)
         s = np.random.randint(-10, 10, (n_body, 3)).astype(float)
 
-        #radius = [1,2,3,4,5,6,7]
+        # radius = [1,2,3,4,5,6,7]
         render_calls = [Planet(r * 0.01) for r in m]
         render_mask = np.zeros(n_body, dtype=bool)
 
         for i in range(wanted):
             render_mask[i] = True
-        
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_MULTISAMPLE)
@@ -209,7 +207,7 @@ class App:
 
         while not self.window_should_close(window):
             self.update()
-            
+
             print(render_mask)
 
             accelerations = {}
@@ -252,12 +250,6 @@ class App:
                 s[body] = v[body] * dt + s[body]
 
                 render_calls[body].draw(s[body])
-
-                # glPointSize(m[body] * 10)
-                # glBegin(GL_POINTS)
-                # glColor3f(1, 1, 1)
-                # glVertex3f(*s[body] @ T)
-                # glEnd()
 
             glfw.swap_buffers(window)
             glfw.poll_events()

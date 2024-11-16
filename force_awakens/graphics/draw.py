@@ -10,7 +10,7 @@ T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 
 def generate_sphere_vertices(radius, stacks, slices):
     vertices = []
-    
+
     for i in range(stacks):
         lat0 = np.pi * (-0.5 + i / stacks)
         lat1 = np.pi * (-0.5 + (i + 1) / stacks)
@@ -23,10 +23,26 @@ def generate_sphere_vertices(radius, stacks, slices):
             sin_lon0, cos_lon0 = np.sin(lon0), np.cos(lon0)
             sin_lon1, cos_lon1 = np.sin(lon1), np.cos(lon1)
 
-            v0 = [radius * cos_lat0 * cos_lon0, radius * sin_lat0, radius * cos_lat0 * sin_lon0]
-            v1 = [radius * cos_lat1 * cos_lon0, radius * sin_lat1, radius * cos_lat1 * sin_lon0]
-            v2 = [radius * cos_lat1 * cos_lon1, radius * sin_lat1, radius * cos_lat1 * sin_lon1]
-            v3 = [radius * cos_lat0 * cos_lon1, radius * sin_lat0, radius * cos_lat0 * sin_lon1]
+            v0 = [
+                radius * cos_lat0 * cos_lon0,
+                radius * sin_lat0,
+                radius * cos_lat0 * sin_lon0,
+            ]
+            v1 = [
+                radius * cos_lat1 * cos_lon0,
+                radius * sin_lat1,
+                radius * cos_lat1 * sin_lon0,
+            ]
+            v2 = [
+                radius * cos_lat1 * cos_lon1,
+                radius * sin_lat1,
+                radius * cos_lat1 * sin_lon1,
+            ]
+            v3 = [
+                radius * cos_lat0 * cos_lon1,
+                radius * sin_lat0,
+                radius * cos_lat0 * sin_lon1,
+            ]
 
             vertices.extend(v0)
             vertices.extend(v1)
@@ -100,70 +116,68 @@ class Tars:
 
         d = 0.01
 
-        self.vertices = np.array([
-            [0,0,0],
-            [x,0,0],
-            [0,y,0],
-            
-            [0,y,0],
-            [x,y,0],
-            [x,0,0],
+        self.vertices = (
+            np.array(
+                [
+                    [0, 0, 0],
+                    [x, 0, 0],
+                    [0, y, 0],
+                    [0, y, 0],
+                    [x, y, 0],
+                    [x, 0, 0],
+                    [0, 0, z],
+                    [x, 0, z],
+                    [0, y, z],
+                    [0, y, z],
+                    [x, y, z],
+                    [x, 0, z],
+                    [0, 0, 0],
+                    [0, y, 0],
+                    [0, y, z],
+                    [0, y, z],
+                    [0, 0, z],
+                    [0, 0, 0],
+                    [x, 0, 0],
+                    [x, y, 0],
+                    [x, y, z],
+                    [x, y, z],
+                    [x, 0, z],
+                    [x, 0, 0],
+                    #############
+                    [0, x, 0 - d],
+                    [0, 1.35 * x, -d],
+                    [x, 1.35 * x, -d],
+                    [x, 1.35 * x, -d],
+                    [x, x, -d],
+                    [0, x, -d],
+                    [0, x, z + d],
+                    [0, 1.35 * x, z + d],
+                    [x, 1.35 * x, z + d],
+                    [x, 1.35 * x, z + d],
+                    [x, x, z + d],
+                    [0, x, z + d],
+                ],
+                dtype=np.float32,
+            )
+            * 0.005
+        )
 
-            [0,0,z],
-            [x,0,z],
-            [0,y,z],
-            
-            [0,y,z],
-            [x,y,z],
-            [x,0,z],
-
-            [0,0,0],
-            [0,y,0],
-            [0,y,z],
-
-            [0,y,z],
-            [0,0,z],
-            [0,0,0],
-            
-            [x,0,0],
-            [x,y,0],
-            [x,y,z],
-
-            [x,y,z],
-            [x,0,z],
-            [x,0,0],
-#############
-            [0,x,0 -d],
-            [0,1.35*x, -d],
-            [x,1.35*x, -d],
-
-            [x,1.35*x, -d],
-            [x,x, -d],
-            [0,x, -d],
-
-            [0,x,z + d],
-            [0,1.35*x,z + d],
-            [x,1.35*x,z + d],
-
-            [x,1.35*x,z + d],
-            [x,x,z + d],
-            [0,x,z + d],
-        ], dtype=np.float32) * 0.005
-
-        self.color = np.array([
-            *[
-                [0.55, 0.55, 0.55],
-            ] * 8 * 3,
-            *[
-                [0.10, 0.10, 0.10]
-            ] * 4 * 3
-        ])
+        self.color = np.array(
+            [
+                *[
+                    [0.55, 0.55, 0.55],
+                ]
+                * 8
+                * 3,
+                *[[0.10, 0.10, 0.10]] * 4 * 3,
+            ]
+        )
 
     def draw(self, s, t):
-        mat = rotation_matrix(t, t*0.1, t*0.5)
+        mat = rotation_matrix(t, t * 0.1, t * 0.5)
 
         glBegin(GL_TRIANGLES)
-        
+
         pos = (self.vertices @ mat + s) @ T
 
         for c, v in zip(self.color, pos):
@@ -186,7 +200,7 @@ class Planet:
 
     def _draw_sphere(self, r, s, alpha):
         glBegin(GL_TRIANGLES)
-        glColor4f(1,1,1, alpha)
+        glColor4f(1, 1, 1, alpha)
         pos = (self.planet * r + s) @ T
         for v in pos:
             glVertex3f(*v)
@@ -196,7 +210,7 @@ class Planet:
     def draw(self, s):
         self._draw_sphere(self.r, s, 1.0)
 
-        for i, prev_s in enumerate(self.prev_s[:self.prev_n]):
+        for i, prev_s in enumerate(self.prev_s[: self.prev_n]):
             scalar = 1 / (i + 1) * self.r * 512
             glPointSize(scalar)
             glBegin(GL_POINTS)
@@ -216,7 +230,7 @@ class BlackHole:
         self.stars = np.random.random((n_stars, 3)) * 100 - 50
         self.stars = np.tan(self.stars)
         self.colors = np.random.random((n_stars, 3))
-        self.colors = self.colors + 0.25 * (1 -self.colors)
+        self.colors = self.colors + 0.25 * (1 - self.colors)
 
         self.distances = np.linalg.norm(self.stars, axis=1)
 
@@ -224,7 +238,7 @@ class BlackHole:
 
     def _draw_center(self, r, s):
         glBegin(GL_TRIANGLES)
-        glColor3f(0,0,0)
+        glColor3f(0, 0, 0)
         pos = (self.vertices * r + s) @ T
         for v in pos:
             glVertex3f(*v)
@@ -238,15 +252,15 @@ class BlackHole:
         stars = self.stars * self.r
 
         for d, star, color in zip(self.distances, stars, self.colors):
-            rx = 1/d**2 * t
+            rx = 1 / d**2 * t
 
             mat = np.array(
-        [
-            [1, 0, 0],
-            [0, np.cos(rx), np.sin(rx)],
-            [0, -np.sin(rx), np.cos(rx)],
-        ]
-    )
+                [
+                    [1, 0, 0],
+                    [0, np.cos(rx), np.sin(rx)],
+                    [0, -np.sin(rx), np.cos(rx)],
+                ]
+            )
 
             glColor3f(*color)
             glVertex3f(*star @ mat @ T)
@@ -255,4 +269,3 @@ class BlackHole:
 
         glClear(GL_DEPTH_BUFFER_BIT)
         self._draw_center(self.r, s)
-
