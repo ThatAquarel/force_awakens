@@ -174,15 +174,17 @@ class Tars:
 
 
 class Planet:
-    def __init__(self, r, atm_scale=0.8,res=30, s_cache=64):
+    def __init__(self, r, atm_scale=0.8,res=10, s_cache=512):
         self.planet = generate_sphere_vertices(r, res, res)
         self.planet = self.planet.reshape((-1, 3))
 
         self.atm_scale = atm_scale
 
-        self.prev_s = np.empty((s_cache))
+        self.prev_s = np.empty((s_cache, 3))
         self.prev_n = 0
         self.s_cache = s_cache
+
+        self.r = r
 
     def _draw_sphere(self, r, s, alpha):
         glBegin(GL_TRIANGLES)
@@ -197,12 +199,15 @@ class Planet:
         self._draw_sphere(1, s, 1.0)
 
         for i, prev_s in enumerate(self.prev_s[:self.prev_n]):
-            scalar = 1 / i
-            self._draw_sphere(scalar, prev_s, scalar)
+            scalar = 1 / (i + 1) * self.r * 512
+            glPointSize(scalar)
+            glBegin(GL_POINTS)
+            glVertex3f(*prev_s @ T)
+            glEnd()
 
-        self.prev_n[1:] = self.prev_n[:-1]
-        self.prev_n[0] = s
-        self.prev_n = np.min(self.s_cache, self.prev_n + 1)
+        self.prev_s[1:] = self.prev_s[:-1]
+        self.prev_s[0] = s
+        self.prev_n = min(self.s_cache - 1, self.prev_n + 1)
 
 
 class BlackHole:
