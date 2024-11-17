@@ -377,17 +377,17 @@ class App:
             if dt:
                 imgui.text(f"{1/dt:.2f} fps")
             imgui.text(f"{np.sum(mask)} bodies")
-
+            
             imgui.spacing()
             imgui.spacing()
-
+            # initialize a imgui table to display all of the images and infos
             if imgui.begin_table("Please chose your celestial body !", 2):
                 imgui.table_setup_column("Images")
                 imgui.table_setup_column("Infos")
                 imgui.table_headers_row()
 
                 selection = np.zeros(len(self.items), dtype=bool)
-
+                # itterate trough each characteristics of the planets and display them on the screen (images for this section)
                 for i, item in enumerate(self.items):
                     imgui.table_next_row()
                     imgui.spacing()
@@ -396,7 +396,7 @@ class App:
                     imgui.image(id,width,height)
 
                     imgui.table_next_column()
-
+                    # itterate trough each characteristics of the planets and display them on the screen (mass, name and type for this section)
                     selection[i] = imgui.button(f"Select {name}")
                     imgui.text(name)
                     imgui.text(f"  Mass: {mass:.4g} kg")
@@ -423,9 +423,9 @@ class App:
                     r = np.log10(float(mass))
                     render_obj.r = r * 0.01
                     m[draw_i] = r
-
+                # put an end to the table 
                 imgui.end_table()
-
+            # render the image and complete its "loop"
             imgui.end()
             imgui.render()
             imgui_impl.process_inputs()
@@ -440,6 +440,6 @@ class App:
 
         self.terminate()
 
-
+# run the app
 def run():
     App((1920, 1080), "The Force Awakens")
