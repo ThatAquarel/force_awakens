@@ -18,7 +18,8 @@ def add_body(render_calls, mask, s, v, zoom, cam_t):
 
     vec = transformed_vector[:3]
     # get the x y z coordinates of the resulting vector (position vector)
-    vector_2 = np.array([0, 10, -10.0, 1.0]) - np.array([*cam_t, 0, 0])
+    rand = np.random.uniform(-5, 5)
+    vector_2 = np.array([rand, 10, -10.0, 1.0]) - np.array([*cam_t, 0, 0])
     transformed_vector = np.dot(modelview_matrix, vector_2)
     vec_t = transformed_vector[:3]
 
