@@ -17,15 +17,16 @@ from OpenGL.GLU import *
 import force_awakens.mechanics
 from force_awakens.graphics.draw import Background, BlackHole, Planet
 from force_awakens.graphics.render import load_texture_simple
-from force_awakens.mechanics.mechanics import add_body, add_throw
+from force_awakens.mechanics.mechanics import add_body
 from force_awakens.mechanics.colors import COLORS
 
-# Drawing transformation array to transform OpenGL coordinates to right-handed physics coordinate system 
+# Drawing transformation array to transform OpenGL coordinates to right-handed physics coordinate system
 T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 
 # Sets the axes for the simulation
 _axes_y = np.mgrid[0:2, 0:1:11j, 0:1].T.reshape((-1, 3)) - [0.5, 0.5, 0.0]
 _axes_x = _axes_y[:, [1, 0, 2]]
+
 
 # main class for the simulation and usage of it
 class App:
@@ -78,7 +79,17 @@ class App:
         texture_id = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, texture_id)
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img_data)
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_RGBA,
+            width,
+            height,
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            img_data,
+        )
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
@@ -259,7 +270,7 @@ class App:
         if dt > 4.0:
             self.intro = False
 
-        progress = (1 / (dt-0.1))**2 + 1
+        progress = (1 / (dt - 0.1)) ** 2 + 1
         self.zoom_level = progress * self.start_zoom
 
     def rendering_loop(
@@ -286,7 +297,7 @@ class App:
         m[0] = 800
         v[0] = 0
         s[0] = 0
-        
+
         # Creates the size of all planets and black holes
         render_calls = [BlackHole(black_hole_r)]
         for i, r in enumerate(m):
@@ -339,7 +350,7 @@ class App:
 
                     s_a, s_b = s[body], s[j]
 
-                    # Determines the distance between the mass that is being analyzed and each other body 
+                    # Determines the distance between the mass that is being analyzed and each other body
                     ds = s_b - s_a
                     d = np.linalg.norm(ds)
 
@@ -399,7 +410,25 @@ class App:
             if dt:
                 imgui.text(f"{1/dt:.2f} fps")
             imgui.text(f"{np.sum(mask)} bodies")
-            
+
+            def draw_new(color, r):
+                draw_i = add_body(
+                    render_calls,
+                    mask,
+                    s,
+                    v,
+                    self.zoom_level,
+                    (self.pan_x, self.pan_y),
+                )
+                # Render the planet and sizes it according it to one hundredth of it's mass's logarithm
+                render_obj = render_calls[draw_i]
+                render_obj.color_arr[:] = color
+                # r = np.log10(float(mass))
+                render_obj.r = r * 0.01
+                m[draw_i] = r
+                decaying[draw_i] = False
+                decay[draw_i] = 1.0
+
             imgui.spacing()
             imgui.spacing()
             # initialize a imgui table to display all of the images and infos
@@ -414,8 +443,8 @@ class App:
                     imgui.table_next_row()
                     imgui.spacing()
                     imgui.table_next_column()
-                    name, body_type, mass, (id,width,height) = item
-                    imgui.image(id,width,height)
+                    name, body_type, mass, (id, width, height) = item
+                    imgui.image(id, width, height)
 
                     imgui.table_next_column()
                     # itterate trough each characteristics of the planets and display them on the screen (mass, name and type for this section)
@@ -430,22 +459,9 @@ class App:
                     i = np.argmax(selection)
                     name, _, mass, _ = self.items[i]
                     print(f"body added {name}")
+                    draw_new(COLORS[i], np.log10(float(mass)))
 
-                    draw_i = add_body(
-                        render_calls,
-                        mask,
-                        s,
-                        v,
-                        self.zoom_level,
-                        (self.pan_x, self.pan_y),
-                    )
-                    # Render the planet and sizes it according it to one hundredth of it's mass's logarithm
-                    render_obj = render_calls[draw_i]
-                    render_obj.color_arr[:] = COLORS[i]
-                    r = np.log10(float(mass))
-                    render_obj.r = r * 0.01
-                    m[draw_i] = r
-                # put an end to the table 
+                # put an end to the table
                 imgui.end_table()
             # render the image and complete its "loop"
             imgui.end()
@@ -456,20 +472,8 @@ class App:
                 imgui.end()
 
                 try:
-                    vec = self.vec_queue.get_nowait()
-
-                    draw_i = add_throw(
-                        vec,
-                        render_calls,
-                        mask,
-                        s,
-                        v,
-                    )
-                    render_obj = render_calls[draw_i]
-                    render_obj.color_arr[:] = COLORS[0]
-                    r = 100
-                    render_obj.r = r * 0.01
-                    m[draw_i] = r
+                    self.vec_queue.get_nowait()
+                    draw_new([1, 1, 1], 50)
                 except Empty:
                     pass
 
@@ -485,6 +489,7 @@ class App:
             start = current
 
         self.terminate()
+
 
 # run the app
 def run(web, qr=None, vec_queue=None):

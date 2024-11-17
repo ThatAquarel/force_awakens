@@ -32,25 +32,3 @@ def add_body(render_calls, mask, s, v, zoom, cam_t):
     render_calls[i].intro = True
 
     return i
-
-
-throw_T = np.array([
-    [0, 0, 1],
-    [0, 1, 0],
-    [-1, 0, 0]
-    ], dtype=np.float32)
-
-
-def add_throw(vec, render_calls, mask,s,v ,throw_pos=np.array([0, 0, -10])):
-    v_vec = vec @ throw_T
-    i = np.argmin(mask)
-
-    s[i] = throw_pos @ np.linalg.inv(T)
-    v[i] = v_vec @ np.linalg.inv(T)
-
-    mask[i] = True
-    render_calls[i].prev_n = 0
-    render_calls[i].intro = True
-
-    return i
-

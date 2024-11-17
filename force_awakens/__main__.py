@@ -14,9 +14,9 @@ def main():
 
     parser.add_argument("-w", "--web", action="store_true")
     parser.add_argument("-p", "--port", default=8080)
+    parser.add_argument("-t", "--token", default="")
+    parser.add_argument("-n", "--no-tunnel", action="store_true")
     args = parser.parse_args()
-
-    # args.web = True
 
     if args.web:
         vec_queue = Queue()
@@ -31,10 +31,18 @@ def main():
         import ngrok
         import qrcode
 
-        listener = ngrok.connect(args.port, authtoken_from_env=True)
-        print(f"Ingress established at {listener.url()}")
+        if args.no_tunnel:
+            url = "http://127.0.0.1:8080"
+        else:
+            if args.token:
+                listener = ngrok.connect(args.port, authtoken=args.token)
+            else:
+                listener = ngrok.connect(args.port, authtoken_from_env=True)
+            url = listener.url()
 
-        img = qrcode.make(listener.url())
+        print(f"Ingress established at {url}")
+
+        img = qrcode.make(url)
         app.run(
             args.web,
             qr=img,

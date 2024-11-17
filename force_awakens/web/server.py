@@ -11,13 +11,13 @@ import force_awakens.web
 def server_process(vec_queue):
     app = Flask(__name__)
 
-    @app.route('/')
+    @app.route("/")
     def serve_index():
         index_bytes = importlib.resources.read_binary(force_awakens.web, "index.html")
         index_bytes = io.BytesIO(index_bytes)
         return send_file(index_bytes, download_name="index.html")
 
-    @app.route('/data', methods=['POST'])
+    @app.route("/data", methods=["POST"])
     def collect_data():
         nonlocal vec_queue
 
@@ -33,12 +33,15 @@ def server_process(vec_queue):
         y = float(y)
         z = float(z)
 
+        print(f"RECEIVED vec: {x} {y} {z}")
         vec_queue.put([x, y, z])
-        
+        print("put queue")
+
         return jsonify({"message": "Data saved successfully"}), 201
 
     import logging
-    log = logging.getLogger('werkzeug')
+
+    log = logging.getLogger("werkzeug")
     log.setLevel(logging.ERROR)
 
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host="0.0.0.0", port=8080)
