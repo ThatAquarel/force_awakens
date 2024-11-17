@@ -1,101 +1,136 @@
-
 <p align="center">
-  <img src="./force_awakens/images/banner.png" alt="figure 1", width="126%"/>
+  <img src="./docs/banner_text.png" alt="figure 1", width="100%"/>
 </p>
 
+# Black Hole Orbital Mechanics N-Body Simulator
 
-## Authors : 
+<hr>
 
-Just students trying to make science, especially it's more advanced topics more approachable for everyone.
+![Icons](https://skillicons.dev/icons?i=python,htmx,gtk)
 
-Tian Yi Xia, Thomas Deleuze-Bisson, Evan Parasol
+## Authors
 
-Dawson College, Montréal
+Concretizing the physics formulas we've all seen in class - making them more approachable - by means of interactive visualizations. Simulating orbital mechanics for deep-space navigation and missions.
+
+Tian Yi Xia<sup>1</sup>, Thomas Deleuze-Bisson<sup>1</sup>, Mateo Duque<sup>1</sup></h4>
+
+<sup>1</sup>Dawson College, Montréal
 
 ![image](https://github.com/user-attachments/assets/3cb84f17-91aa-46a1-8e5e-d2c0823da192)
 
 
-## A little bit about us,
+## A Little Bit About Us
 
-Hi, we're three Dawson College Students in the Enriched Science Program. As we share various common passions such as programming, physics, space and math, we've decided to participate in the 2024 Edition of the McGill University Physics Hackaton. Ever since we had figured out that astrophysics was a field that scared most people because of its complexity, we decided to make it our mission to demonstrate it in the simplest way possible and what better way to do so than to make an accessible, fun and diverse sandbox in which the powers of graviationnal fields, forces and accelerations can be observed.
+Three Dawson College Students in the Enriched Science Program. As we share common passions such as programming, physics, space and math, we've decided to participate in the **2024 Edition of the McGill University Physics Hackathon**. Ever since we had figured out that astrophysics was a field that scared most people because of its complexity, we decided to make it our mission to demonstrate it in the simplest way possible and what better way to do so than to make **an accessible, interactive and adaptable sandbox in which the powers of graviationnal fields, forces and accelerations can be observed - and harnessed**.
 
-## Our idea
+## The Idea
 
-For this hackathon, our idea was to take the wonder of space and the beauty of orbital mechanics, and to make them visible to the eyes of anyone by implementing a program that visualises the orbits of celestial bodies around a black hole. Additionally, we wanted to make it so that the mass and gravitational pull of the black hole increased as it consumes the bodies that are orbiting it, to mirror how that happens in reality. Lastly, we wanted to make this more interactive and engaging for users, and so we decided to implement a mechanism whereby the user can launch planets with masses and velocities into the system, so as to continually have more interactions between celestial bodies, the black hole, and each other.
+- Taking the wonder of space and the beauty of orbital mechanics, to visualize them to the eyes of anyone by implementing a program that **simulates the orbits of celestial bodies around a black hole**.
+
+- **Mass and gravitational pull of the bodies increasing** as it collisions happen between the orbiting bodies, to mirror how that happens in reality.
+
+- Interactive and engaging for users: **a phone website where the user can launch planets with masses and velocities into the system**, so as to continually have more interactions between celestial bodies, the black hole, and each other.
 
 ## Project Structure
 
-- `force_awakens/`:
-    - `graphics/`:
-        - `draw.py`:
-        - `render.py`:
-    - `images/`:
-    - `mechanics/`:
-        - `mechanics.py`:
-    - `__main__.py`:
-    - `app.py`:
-    - `rgb.txt`:
-- `elements_in_space.csv`:
-- `imgui.ini`:
-- `setup.py`:
-- `stars_selected_test.py`:
+- `force_awakens/`: Root of Python package
+    - `__main__.py`: Entrypoint
+    - `app.py`: Rendering loop
+    - `graphics/`
+        - `draw.py`: Objects and planets drawing
+        - `render.py`: OpenGL rendering helper functions
+    - `mechanics/`
+        - `mechanics.py`: Body adding mechanics
+        - `colors.py`: Body colors
+        - `elements_in_space.csv`: Body properties
+    - `web/`
+        - `server.py`: Webserver for client connection and interactivity
+        - `index.html`: Client side website
+    - `images/`: Resources and loaded textures
 
 ## Requirements
 
 The requirements for running the code are as follows:
-- time == version?
-- glfw == version?
-- numpy == version?
-- imgui == version?
-- OpenGL.GL == version?
-- OpenGL.GLU == version?
-- importlib == version?
-- io == version?
-- math == version?
-- jekyll-remote-theme ??????
+- Flask==3.1.0
+- glfw==2.7.0
+- imgui==2.0.0
+- matplotlib==3.9.2
+- ngrok==1.4.0
+- numpy==2.1.3
+- pandas==2.2.3
+- Pillow==11.0.0
+- pygame==2.6.1
+- PyOpenGL==3.1.7
+- qrcode==8.0
 
-## How it works
+## How it Works
 
-There are many steps to completing this project. First obviously was to gather data of various planets and other celestial bodies across our universe such as exoplanets, stars, etc. We did that by using many tools such as Nasa's Eyes on Exoplanets projects which gives us an accurate representation of what each known star and exoplanet looks like which abled us to draw their visual models. For planets from the Star Wars Universe, we looked trough various fan websites, approximations and even quotes from the movie to get our data (mass,size,etc). Once we had these ressources, we then created many csv and txt files organizing their colors in order to be able to plug them in our actual black hole model. Another step of the process was to code the interface used to select the planets which was done using imgui, a super useful website-building python library, allowing us to design an modern and easy to exchange informations with the user.
+1. **Gather data of various planets and other celestial bodies** across our universe such as exoplanets, stars, etc. using tools such as NASA's Eyes on Exoplanets. 
+    - We **obtain an accurate representation** of what each known star and exoplanet looks like which abled us to draw their visual models. For planets from the Star Wars Universe, we looked trough various fan websites, approximations and even quotes from the movie to get their properties.
 
-<p align="center">
-  <img src="./force_awakens/images/orange-red.png" alt="figure 1", width="25%"/>
-</p>
+    - **Organize planet properties** in order to be able to plug them in our actual black hole model.
 
-Now for the math parts, more especially for the gravitationnal field part, this is how thing works: we calculate seperatly the Fg using the G(m1)(m2)/r^2 formula by adding all of the fg exerted by the different planets on the desired planet. It is important to mention that this process will be repeated for every single planets; in other words, we calculate the Fnet for every planets by adding all of the Fg that the other planets exert on it. We then find their acceleration with Newton's Second Law. Their velocity using the acceleration and finally, their position using this velocity that gets updated every frame at approximatively 60 frames per second which gives an impression that it is constantly moving, similarly to what happens in real life. 
+3. **Simulate body interactions with Newtonian Physics** and Euler Integration over timesteps, for each body pair interaction.
+ 
+    -  We calculate seperatly the gravitational force, and **sum the forces exerted** by the different planets on the desired planet. We repeat this process for every single planet. In other words, we calculate the the sum of forces for every planets by adding all of the Fg that the other planets exert on it.
+
+    - We then find their acceleration with **Newton's Second Law**. Their velocity using the acceleration and finally, their position using this velocity that gets integrated at 60Hz.
+
+4. **Render simulated planets** and stars using OpenGL, with a user interface built in Imgui.
+
+5. A website that is joinable by phone to **interact with the application in real-time**.
 
 
-## Result
+## How to Run
 
-images will go here
+Clone repository locally
 
-<!-- # What our projects consist of...
+```bash
+git clone https://github.com/ThatAquarel/force_awakens.git
+cd force_awakens/
+```
 
-We've designed, as mentionned earlier, a sandbox where it is possible for users to add all sorts of celestial bodies ranging from black holes to various exoplanets, even including a few ones from you favorite shows in order to observe their graviationnal influence over each other in a neutral spatial environment and create an interesting and visual learning experience for the user. We think that such a project makes science more accessible to everyone as sometimes, just a visual representation of something makes us understand a concept so much better.
+Install Python dependencies with python>=3.11
+```bash
+pip install -r requirements.txt
+```
 
-# How it works
+Install package locally in development mode
+```bash
+pip install -e .
+```
 
-Now let's get into the interesting part; how the project works ! First, lets deconstruct it into a few steps... 1. Exoplanets scouting, gathering of data and accurate representation of celestial bodies, 2. Development of an 3d gravity neutral envrionment to oberve the behavior of planets using OpenGL, 3. Implementation of matrices to evaluate the "planet throwing" feature of our project using linear algebra.
+Run program (different command line options)
+```bash
+python -m force_awakens          # Run simulation
+python -m force_awakens --web    # Run simulation with web client, needs NGROK_AUTHTOKEN set as env variable
 
-# 1. Data gathering
+python -m force_awakens --web --port 5000                # Specify port
+python -m force_awakens --web --token $NGROK_AUTHTOKEN$  # Specify token
+python -m force_awakens --web --no-tunnel                # Run locally on 127.0.0.1
+```
 
-We started by looking on various NASA websites for exoplanets and information about them, such as mass, radius, and distance from the earth. Then we began researching the various libraries that we would plan to use in the making of our project, such as openGL, glfw, and imgui. Finally, we researched the information that would be needed to simulate gravity between celestial bodies, as well as attempting to figure out methods of properly displaying black holes.
+## Results
 
-# 2. Creation of the three dimensionnal environment
+### Orbital Simulation Rendering
+![render_0](docs/render_0.png)
+![render_4](docs/render_4.png)
 
-# 3. Implementation of linear algebra to solve an interesting problem
+### Software Interface
+![render_1](docs/render_1.png)
+![render_2](docs/render_2.png)
 
-<<<<<<< HEAD
- -->
-=======
-# Contact
+# Phone Website and Client Interaction
+![render_3](docs/render_3.png)
+![phone](docs/phone.jpg)
 
-- [Tian Yi, Xia](https://github.com/ThatAquarel/space), xtxiatianyi@gmail.com: 
+## Contacts
+
+- [Tian Yi, Xia](https://github.com/ThatAquarel), xtxiatianyi@gmail.com: 
 - [Thomas, Deleuze-Bisson](https://github.com/Thomas4534), deleuzethomasbisson@gmail.com: 
 - [Evan Parasol](https://github.com/TheBookwyrms), blackdragon6493@gmail.com: 
 
-
-# References
+## References
 
 1. Rohlfs, M., & Pohl, T. (2009). Quantum dots in semiconductor nanostructures: From basic physics to quantum technologies. Proceedings of the National Academy of Sciences, 106(47), 20129-20134. https://doi.org/10.1073/pnas.0910927107
 2. Kisa, M. (n.d.). Rotations and rotation matrices. Retrieved from http://pajarito.materials.cmu.edu/documents/Kisa.Papers/Rotations%20and%20rotation%20matrices.pdf
@@ -105,5 +140,3 @@ We started by looking on various NASA websites for exoplanets and information ab
 6. National Oceanic and Atmospheric Administration (NOAA) and Joint Center for Satellite Data Assimilation (JCSDA). "Orbit Simulator for Satellite and Near-Space Platforms." NOAA Technical Report, 2021. DOI: 10.1016/j.ejpra.2020.100054
 7. NASA Jet Propulsion Laboratory. (2020). Eyes on Exoplanets. NASA. Retrieved November 16, 2024, from https://eyes.nasa.gov
 
-
->>>>>>> dcf09b55569601a7284dd3985dd0a1f8fd845286
