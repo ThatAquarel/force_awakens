@@ -279,7 +279,7 @@ class App:
         imgui_impl,
         n_body=32,
         G=6.6743e-2,
-        wanted=10,
+        wanted=16,
         black_hole_r=1,
     ):
         # Initialises the masses, accelerations, velocities, and positions of n_body planets
@@ -323,7 +323,7 @@ class App:
         start = time.time()
         dt = 0
 
-        draw_background, draw_dense = False, False
+        draw_background, draw_dense = True, True
 
         while not self.window_should_close(window):
             # Updates the introdution

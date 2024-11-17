@@ -206,8 +206,7 @@ def rotation_matrix(rx, ry, rz):
 
 
 class Planet:
-    def __init__(self, r, res=15, s_cache=256):
-        # Generates a planet with vertices from generate_sphere_vertices
+    def __init__(self, r, res=15, s_cache=512):
         self.planet = generate_sphere_vertices(1, res, res)
         self.planet = self.planet.reshape((-1, 3))
 
