@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Accelerometer Data</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>
+      eruda.init();
+    </script>
+  </head>
+  <body>
+    <h1 id="labels">Accelerometer Data Collection</h1>
+
+    <h4 id="x"></h4>
+    <h4 id="y"></h4>
+    <h4 id="z"></h4>
+
+    <button id="start">Start Recording Data</button>
+
+    <button id="fetch-data">Fetch Data</button>
+    <pre id="data-output"></pre>
+
+    <script>
+      let is_running = false;
+      const demo_button = document.getElementById("start");
+      demo_button.onclick = function (e) {
+        e.preventDefault();
+
+        if (
+          DeviceMotionEvent &&
+          typeof DeviceMotionEvent.requestPermission === "function"
+        ) {
+          DeviceMotionEvent.requestPermission();
+        }
+
+        if (is_running) {
+          window.removeEventListener("devicemotion", handleMotion);
+          // window.removeEventListener("deviceorientation", handleOrientation);
+          demo_button.innerHTML = "Start demo";
+          // demo_button.classList.add('btn-success');
+          // demo_button.classList.remove('btn-danger');
+          is_running = false;
+        } else {
+          window.addEventListener("devicemotion", handleMotion);
+          // window.addEventListener("deviceorientation", handleOrientation);
+          document.getElementById("start").innerHTML = "Stop demo";
+          // demo_button.classList.remove('btn-success');
+          // demo_button.classList.add('btn-danger');
+          is_running = true;
+        }
+      };
+
+      if (window.DeviceMotionEvent) {
+        let label = document.getElementById("labels");
+        label.innerHTML = "sdlkJFDSFJLSKDFJ";
+      } else {
+        console.error("DeviceMotionEvent not supported on this device");
+      }
+
+      function handleMotion(event) {
+        let xl = document.getElementById("x");
+        let yl = document.getElementById("y");
+        let zl = document.getElementById("z");
+
+        const x = event.acceleration.x || 0;
+        const y = event.acceleration.y || 0;
+        const z = event.acceleration.z || 0;
+
+        xl.innerText = x;
+        yl.innerText = y;
+        zl.innerText = z;
+
+        const data = {
+          user_id: Math.floor(Math.random() * 65536), // Replace with dynamic user ID if needed
+          x: x,
+          y: y,
+          z: z,
+        };
+
+        console.log(data);
+
+        console.log(x);
+        console.log(y);
+        console.log(z);
+
+        fetch("data", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }).then((response) => {
+          if (response.ok) {
+            console.log("Data sent successfully");
+          } else {
+            console.error("Error sending data");
+          }
+        });
+      }
+
+      // document.getElementById("fetch-data").addEventListener("click", () => {
+      //     fetch('http://127.0.0.1:8080/data')
+      //         .then(response => response.json())
+      //         .then(data => {
+      //             document.getElementById("data-output").textContent = JSON.stringify(data, null, 2);
+      //         })
+      //         .catch(error => console.error("Error fetching data:", error));
+      // });
+    </script>
+  </body>
+</html>
