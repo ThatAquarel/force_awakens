@@ -257,12 +257,15 @@ class Planet:
         self.trail_point[0] = s
         self.prev_n = min(self.s_cache - 1, self.prev_n + 1)
 
-        col = [0.5, 0.5 * scalar, 0.5]
+        col = self.def_color[:3] * [0.5, 0.5 * scalar, 0.5]
         update_vbo(self.trail_vbo, self._get_t_vbo_data(col))
         glLineWidth(2.0)
         draw_vbo(self.trail_vbo, self.trail_stride, GL_LINE_STRIP, self.prev_n)
 
     # TODO DRAW SECTION
+
+    def set_color(self, col):
+        self.def_color[:3] = col
 
     def draw(self, s, _, decay):
         # Draws the introductory sequence for any given newly added planet
@@ -274,12 +277,14 @@ class Planet:
             self._draw_sphere(scalar, self.r * scalar, s, 1.0)
 
         # Creates the cloud of points surrounding newly created planets
-        if self.prev_n < (self.s_cache - 1):
+        if self.prev_n < (self.s_cache - 1) and self.intro:
             uniform_points = np.random.uniform(-1, 1, (100, 3))
             uniform_points = np.tan(uniform_points)
-            glPointSize(2.0)
+            glPointSize(2 * (1 - scalar))
             glBegin(GL_POINTS)
-            glColor4f(1 - scalar, 0, 1 - scalar, decay)
+
+            col = self.def_color[:3] * [1, scalar, 1]
+            glColor4f(*col, decay * -2.5 * (scalar + 0.25) * (scalar - 1))
             for point in uniform_points:
                 glVertex3f(*(point + s) @ T)
             glEnd()
@@ -292,6 +297,8 @@ class Planet:
 class BlackHole:
     def __init__(self, r, res=25, n_stars=32768):
         # Initialises the black hole's sphere
+        self.draw_dense = True
+
         self.r = r
         self.vertices = generate_sphere_vertices(r, res, res)
         self.vertices = self.vertices.reshape((-1, 3))
@@ -349,10 +356,11 @@ class BlackHole:
         return self.data
 
     def draw(self, s, t, _):
-        glDepthMask(GL_FALSE)
-        glPointSize(1.0)
-        draw_vbo(self.point_vbo, self.stride, GL_POINTS, self.n_stars)
-        glDepthMask(GL_TRUE)
+        if self.draw_dense:
+            glDepthMask(GL_FALSE)
+            glPointSize(1.0)
+            draw_vbo(self.point_vbo, self.stride, GL_POINTS, self.n_stars)
+            glDepthMask(GL_TRUE)
 
         update_vbo(self.point_vbo, self._get_vbo_data(t))
 

@@ -323,6 +323,8 @@ class App:
         start = time.time()
         dt = 0
 
+        draw_background, draw_dense = False, False
+
         while not self.window_should_close(window):
             # Updates the introdution
             if self.intro:
@@ -332,9 +334,6 @@ class App:
 
             # Updates the window, background, and axes
             self.update()
-            background.draw()
-
-            self.draw_axes()
 
             # Sets the acceleration that will be added to so that all accelerations, velocities, and positions can be updated simultaneously
             a_sum[:] = a
@@ -396,15 +395,24 @@ class App:
             s[0] = 0
             mask[0] = True
 
+            # Creates a new frame
+            imgui.new_frame()
+            imgui.begin("The Force Awakens")
+
+            _, draw_background = imgui.checkbox(
+                "Draw background stars", draw_background
+            )
+            _, draw_dense = imgui.checkbox("Draw orbiting stars", draw_dense)
+
+            if draw_background:
+                background.draw()
+            render_calls[0].draw_dense = draw_dense
+
             # Renders every body that is not masked
             for body in range(n_body):
                 if not mask[body]:
                     continue
                 render_calls[body].draw(s[body], start, decay[body])
-
-            # Creates a new frame
-            imgui.new_frame()
-            imgui.begin("The Force Awakens")
 
             # Shows the fps and number of bodies currently unmasked
             if dt:
@@ -422,7 +430,7 @@ class App:
                 )
                 # Render the planet and sizes it according it to one hundredth of it's mass's logarithm
                 render_obj = render_calls[draw_i]
-                render_obj.color_arr[:] = color
+                render_obj.set_color(color)
                 # r = np.log10(float(mass))
                 render_obj.r = r * 0.01
                 m[draw_i] = r
