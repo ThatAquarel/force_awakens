@@ -17,7 +17,7 @@ Tian Yi Xia<sup>1</sup>, Thomas Deleuze-Bisson<sup>1</sup>, Evan Parasol<sup>1</
 
 ## A Little Bit About Us
 
-Three Dawson College Students in the Enriched Science Program. As we share common passions such as programming, physics, space and math, we've decided to participate in the **2024 Edition of the McGill University Physics Hackathon**. Ever since we had figured out that astrophysics was a field that scared most people because of its complexity, we decided to make it our mission to demonstrate it in the simplest way possible and what better way to do so than to make **an accessible, interactive and adaptable sandbox in which the powers of graviationnal fields, forces and accelerations can be observed - and harnessed**.
+Three Dawson College Students in the Enriched Science Program. As we share common passions such as programming, physics, space and math, we've decided to participate in the **2024 Edition of the McGill University Physics Hackathon**. Ever since we had figured out that astrophysics was a field that scared most people because of its complexity, we decided to make it our mission to demonstrate it in the simplest way possible and what better way to do so than to make **an accessible, interactive and adaptable sandbox in which the powers of gravitational fields, forces and accelerations can be observed - and harnessed**.
 
 ## The Idea
 
@@ -96,10 +96,16 @@ Install package locally in development mode
 pip install -e .
 ```
 
-Run program (different command line options)
+Run program with full features set
+
 ```bash
-python -m force_awakens          # Run simulation
-python -m force_awakens --web    # Run simulation with web client, needs NGROK_AUTHTOKEN set as env variable
+python -m force_awakens --web 
+```
+
+Here are other more advanced options for specific features
+
+```bash
+python -m force_awakens          # Run simulation without website
 
 python -m force_awakens --web --port 5000                # Specify port
 python -m force_awakens --web --token $NGROK_AUTHTOKEN$  # Specify token
