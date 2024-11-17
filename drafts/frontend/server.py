@@ -22,9 +22,8 @@ def collect_data():
 
     global buffer_index, data_buffer
 
-    # Parse JSON payload
     data = request.json
-    user_id = data.get("user_id", 0)  # Default to 0 if user_id is not provided
+    user_id = data.get("user_id", 0)
     x = data.get("x")
     y = data.get("y")
     z = data.get("z")
@@ -47,13 +46,10 @@ def collect_data():
 
     return jsonify({"message": "Data saved successfully"}), 201
 
-# Retrieve data from the buffer
 @app.route('/data', methods=['GET'])
 def get_data():
     global buffer_index, data_buffer
-
-    # Return data currently in the buffer
-    valid_data = data_buffer[:min(buffer_index, BUFFER_SIZE)]  # Only valid entries
+    valid_data = data_buffer[:min(buffer_index, BUFFER_SIZE)]
     return jsonify(valid_data.tolist())
 
 if __name__ == "__main__":
