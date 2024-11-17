@@ -47,6 +47,7 @@ class App:
         self.pan_sensitvity = pan_sensitvity
         self.orbit_sensitivity = orbit_sensitivity
 
+        # Camera movement conditions
         self.angle_x, self.angle_y = 20.0, 125.0
         self.pan_x, self.pan_y = 0.0, 0.0
         self.last_x, self.last_y = 0.0, 0.0
@@ -67,15 +68,23 @@ class App:
         # Renders all items inside the window
         self.web = web
         if web:
+            # Generate QR Code for web interactive demo
+            # Attach as texture
             self.qr_tex = self._load_qr(qr)
             self.vec_queue = vec_queue
 
+        # Preload buffers and textures of 
+        # possible planets to add
         self._load_planets()
+
+        # Start rendering
         self.rendering_loop(self.window, self.imgui_impl)
 
     def _load_qr(self, qr):
         img_data = qr.convert("RGBA").tobytes()
         width, height = qr.size
+        
+        # Bind QR as a texture for imgui rendering
         texture_id = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, texture_id)
 
@@ -112,6 +121,7 @@ class App:
             img_file = row["img_file"]
 
             if not pd.isna(img_file):
+                # Buffer as texture of fixed size
                 img_id, width, height = load_texture_simple(img_file, size=(140, 160))
             else:
                 continue
@@ -134,6 +144,8 @@ class App:
 
         # Gets and uses information needed to maintain and update the window
         glfw.make_context_current(window)
+
+        # Attach functions to callback 
         glfw.set_cursor_pos_callback(window, self.cursor_pos_callback)
         glfw.set_mouse_button_callback(window, self.mouse_button_callback)
         glfw.set_scroll_callback(window, self.scroll_callback)
