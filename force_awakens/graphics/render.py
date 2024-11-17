@@ -33,7 +33,7 @@ def draw_vbo(vbo, stride, draw_type, n, v_ptr=3, c_ptr=3):
     size = stride // (v_ptr + c_ptr)
     glColorPointer(c_ptr, GL_FLOAT, stride, ctypes.c_void_p(v_ptr * size))
 
-    glPointSize(1.0)
+    # glPointSize(1.0)
     glDrawArrays(draw_type, 0, n)
 
     glDisableClientState(GL_VERTEX_ARRAY)

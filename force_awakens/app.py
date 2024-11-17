@@ -279,7 +279,7 @@ class App:
         imgui_impl,
         n_body=32,
         G=6.6743e-2,
-        wanted=10,
+        wanted=30,
         black_hole_r=1,
     ):
         # Initialises the masses, accelerations, velocities, and positions of n_body planets

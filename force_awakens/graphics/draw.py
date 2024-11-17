@@ -220,38 +220,48 @@ class Planet:
         self.intro = False
 
         # Sets the initial color to rgb 1,1,1
-        self.color_arr = np.ones(3, dtype=np.float32)
-
         self.def_color = np.ones(4, dtype=np.float32)
+        s0 = np.zeros(3, dtype=np.float32)
 
         self.sphere_point = generate_sphere_vertices(1, res, res).reshape((-1, 3))
         self.sphere_color = np.ones((len(self.sphere_point), 4), dtype=np.float32)
-        self.sphere_vbo = create_vbo(self._get_vbo_data(r, [0, 0, 0], self.def_color))
+        self.sphere_vbo = create_vbo(self._get_s_vbo_data(r, s0, self.def_color))
         self.sphere_stride = self.sphere_point.itemsize * 7
         self.sphere_n = self.sphere_point.shape[0]
 
-    def _get_vbo_data(self, r, s, col):
+        self.trail_point = np.zeros((s_cache, 3), dtype=np.float32)
+        self.trail_color = np.ones((s_cache, 3), dtype=np.float32)
+        self.trail_vbo = create_vbo(self._get_t_vbo_data(self.def_color[:3]))
+        self.trail_stride = self.trail_point.itemsize * 6
+
+    def _get_s_vbo_data(self, r, s, col):
         points = (self.sphere_point * r + s) @ T
         colors = self.sphere_color * col
+        return np.hstack((points, colors)).astype(np.float32)
+
+    def _get_t_vbo_data(self, col):
+        points = self.trail_point @ T
+        colors = self.trail_color * col
         return np.hstack((points, colors)).astype(np.float32)
 
     def _draw_sphere(self, scalar, r, s, alpha):
         # Draws a sphere using triangles to build it
 
         col = self.def_color * [1, scalar, 1, 1]
-        update_vbo(self.sphere_vbo, self._get_vbo_data(r, s, col))
+        update_vbo(self.sphere_vbo, self._get_s_vbo_data(r, s, col))
         draw_vbo(
             self.sphere_vbo, self.sphere_stride, GL_TRIANGLES, self.sphere_n, c_ptr=4
         )
 
-        # glBegin(GL_TRIANGLES)
-        # glColor4f(1, scalar, 1, alpha)
-        # pos = (self.planet * r + s) @ T
-        # col = self.color_arr * [1, scalar, 1]
-        # glColor4f(*col, alpha)
-        # for v in pos:
-        #     glVertex3f(*v)
-        # glEnd()
+    def _draw_trail(self, s, scalar):
+        self.trail_point[1:] = self.trail_point[:-1]
+        self.trail_point[0] = s
+        self.prev_n = min(self.s_cache - 1, self.prev_n + 1)
+
+        col = [0.5, 0.5 * scalar, 0.5]
+        update_vbo(self.trail_vbo, self._get_t_vbo_data(col))
+        glLineWidth(2.0)
+        draw_vbo(self.trail_vbo, self.trail_stride, GL_LINE_STRIP, self.prev_n)
 
     # TODO DRAW SECTION
 
@@ -277,20 +287,7 @@ class Planet:
         else:
             self.intro = False
 
-        glLineWidth(2.0)
-        glBegin(GL_LINE_STRIP)
-
-        # Colors planets
-        col = self.color_arr * [0.5, 0.5 * scalar, 0.5]
-        glColor3f(*col)
-        for prev_s in self.prev_s[: self.prev_n : 4]:
-            glVertex3f(*prev_s @ T)
-        glEnd()
-
-        # Determines the position of the cloud as it moves
-        self.prev_s[1:] = self.prev_s[:-1]
-        self.prev_s[0] = s
-        self.prev_n = min(self.s_cache - 1, self.prev_n + 1)
+        self._draw_trail(s, scalar)
 
 
 class BlackHole:
