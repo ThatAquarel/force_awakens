@@ -7,6 +7,7 @@ import importlib.resources
 
 import force_awakens.images
 
+#initialize buffers 
 def create_vbo(data):
     vbo = glGenBuffers(1)
     glBindBuffer(GL_ARRAY_BUFFER, vbo)
@@ -14,20 +15,20 @@ def create_vbo(data):
     glBindBuffer(GL_ARRAY_BUFFER, 0)
     return vbo
 
-
+# function that updates the vbo (a buffer); using new data from the beggining of the buffer
 def update_vbo(vbo, data):
     glBindBuffer(GL_ARRAY_BUFFER, vbo)
     glBufferSubData(GL_ARRAY_BUFFER, 0, data.nbytes, data)
     glBindBuffer(GL_ARRAY_BUFFER, 0)
 
-
+# function for initializing all of the images, the bits, their settings, their width and returns those parameters appropriated for the given images
 def load_texture_simple(image_path):
     bits = importlib.resources.read_binary(force_awakens.images, image_path)
     image = Image.open(io.BytesIO(bits))
-
+    #convverts images to bytes
     img_data = image.convert("RGBA").tobytes()
     width, height = image.size
-
+    # just importing and initialzing a bunch of parameters that will be used later in the program
     texture_id = glGenTextures(1)
     glBindTexture(GL_TEXTURE_2D, texture_id)
 

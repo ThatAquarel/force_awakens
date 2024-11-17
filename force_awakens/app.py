@@ -18,14 +18,14 @@ from force_awakens.graphics.render import load_texture_simple
 from force_awakens.mechanics.mechanics import add_body
 from force_awakens.mechanics.colors import COLORS
 
-
+# Drawing transformation array to transform OpenGL coordinates to right-handed physics coordinate system 
 T = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]])
 
-
+# Sets the axes for the simulation
 _axes_y = np.mgrid[0:2, 0:1:11j, 0:1].T.reshape((-1, 3)) - [0.5, 0.5, 0.0]
 _axes_x = _axes_y[:, [1, 0, 2]]
 
-
+# main class for the simulation and usage of it
 class App:
     def __init__(
         self,
@@ -36,6 +36,7 @@ class App:
         orbit_sensitivity=0.1,
         start_zoom=18,
     ):
+        # Setting attributes of the class and starting conditions
         self.zoom_sensitivity = zoom_sensitivity
         self.pan_sensitvity = pan_sensitvity
         self.orbit_sensitivity = orbit_sensitivity
@@ -47,14 +48,17 @@ class App:
         self.zoom_level = start_zoom
         self.start_zoom = start_zoom
 
+        # Calls the introductory zoom in from the start time
         self.start_time = time.time()
         self.intro = True
 
         self.view_left, self.view_right = 0, 0
 
+        # Creates window and buttons
         self.window = self.window_init(window_size, name)
         self.imgui_impl = self.init_imgui(self.window)
 
+        # Renders all items inside the window
         self._load_planets()
         self.rendering_loop(self.window, self.imgui_impl)
 
@@ -62,6 +66,7 @@ class App:
     def _load_planets(self):
         self.items = []
 
+        # Imports and analyzes the csv containing information about planets which can be added
         binary = importlib.resources.read_binary(
             force_awakens.mechanics, "elements_in_space.csv"
         )
@@ -79,31 +84,38 @@ class App:
                 continue
             width, height = width // 2, height // 2
 
+            # Appends the information from the csv to the items attribute of the app class
             self.items.append([name, type_, mass, (img_id, width, height)])
 
     def window_init(self, window_size, name):
+        # Raises an exception if GLFW couldn't be initiated
         if not glfw.init():
             raise Exception("GLFW could not be initialized.")
 
+        # Creates window
         glfw.window_hint(glfw.SAMPLES, 4)
         window = glfw.create_window(*window_size, name, None, None)
         if not window:
             glfw.terminate()
             raise Exception("GLFW window could not be created.")
 
+        # Gets and uses information needed to maintain and update the window
         glfw.make_context_current(window)
         glfw.set_cursor_pos_callback(window, self.cursor_pos_callback)
         glfw.set_mouse_button_callback(window, self.mouse_button_callback)
         glfw.set_scroll_callback(window, self.scroll_callback)
         glfw.set_framebuffer_size_callback(window, self.resize_callback)
 
+        # Most recent position of cursor
         self.last_x, self.last_y = glfw.get_cursor_pos(window)
 
+        # Resizes window
         self.resize_callback(window, *window_size)
 
         return window
 
     def init_imgui(self, window):
+        # Creates imgui context and renderer
         imgui.create_context()
         return GlfwRenderer(window, attach_callbacks=False)
 
@@ -113,6 +125,7 @@ class App:
 
         press = action == glfw.PRESS
 
+        # If a given button is pressed, the screen inside the window is panned or rotated
         if button == glfw.MOUSE_BUTTON_LEFT:
             self.dragging = press
             shift = glfw.get_key(window, glfw.KEY_LEFT_SHIFT) == glfw.PRESS
@@ -125,6 +138,7 @@ class App:
         if self.imgui_impl != None and imgui.get_io().want_capture_mouse:
             return
 
+        # If the cursor is dragging, updates the position of the cursor in the program
         if self.dragging:
             dx = xpos - self.last_x
             dy = ypos - self.last_y
@@ -141,12 +155,14 @@ class App:
         if self.imgui_impl != None and imgui.get_io().want_capture_mouse:
             return
 
+        # Zooms in and out
         if yoffset > 0:
             self.zoom_level /= 1 + self.zoom_sensitivity
         elif yoffset < 0:
             self.zoom_level *= 1 + self.zoom_sensitivity
 
     def resize_callback(self, window, width, height):
+        # Properly sizes the viewport window to the correct ratio
         glViewport(0, 0, width, height)
 
         aspect_ratio = width / height if height > 0 else 1.0
@@ -157,6 +173,7 @@ class App:
         glLineWidth(1.0)
         glBegin(GL_LINES)
 
+        # Makes all the points in the x-axis and y-axis
         glColor3f(1.0, 1.0, 1.0)
         for point in _axes_x:
             glVertex3f(*(point) @ T)
@@ -164,6 +181,7 @@ class App:
             glVertex3f(*point @ T)
         glEnd()
 
+        # Draws the x/y/z axis grid
         glLineWidth(2.0)
         glBegin(GL_LINES)
 
@@ -181,27 +199,20 @@ class App:
 
         glEnd()
 
-    def draw_points(self, points):
-        glPointSize(4.0)
-        glBegin(GL_LINE_STRIP)
-        glColor3f(1.0, 1.0, 1.0)
-
-        for i, point in enumerate(points):
-            # glColor3f(*aruco_point_color[i % aruco_point_color.shape[0]])
-            glVertex3f(*point @ self.T)
-
-        glEnd()
-
     def window_should_close(self, window):
+        # Returns if the window should close
         return glfw.window_should_close(window)
 
     def terminate(self):
+        # Terminates the window
         glfw.terminate()
 
     def update(self):
+        # Clears the color and depth buffers upon update
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glClearColor(0.05, 0.05, 0.05, 1.0)
 
+        # Creates the orthogonal projection used by the camera
         glMatrixMode(GL_PROJECTION)
         glLoadIdentity()
         glOrtho(
@@ -213,15 +224,15 @@ class App:
             1024,
         )
 
+        # Governs the rotation and translation of the camera
         glMatrixMode(GL_MODELVIEW)
         glLoadIdentity()
         glTranslatef(self.pan_x, self.pan_y, 0.0)
         glRotatef(self.angle_x, 1.0, 0.0, 0.0)
         glRotatef(self.angle_y, 0.0, 1.0, 0.0)
 
-        # self.draw_axes()
-
     def update_intro(self):
+        # Zooms into the window upon program commencing
         dt = time.time() - self.start_time
         if dt > 4.0:
             self.intro = False
@@ -238,24 +249,30 @@ class App:
         wanted=10,
         black_hole_r=1,
     ):
+        # Initialises the masses, accelerations, velocities, and positions of n_body planets
         m = np.random.randint(10, 30, n_body)
         a = np.zeros((n_body, 3), dtype=np.float32)
         a_sum = np.zeros((n_body, 3), dtype=np.float32)
         v = np.random.randint(-1, 1, (n_body, 3)).astype(float)
         s = np.random.randint(-10, 10, (n_body, 3)).astype(float)
 
+        # Initialises the lack of decay of any initial body
         decaying = np.zeros(n_body, dtype=bool)
         decay = np.ones(n_body, dtype=np.float32)
 
+        # Sets the mass, velocity, and position of the central black hole
         m[0] = 800
         v[0] = 0
         s[0] = 0
+        
+        # Creates the size of all planets and black holes
         render_calls = [BlackHole(black_hole_r)]
         for i, r in enumerate(m):
             if i == 0:
                 continue
             render_calls.append(Planet(r * 0.01))
 
+        # Creates the mask to hide all non-desired planets
         mask = np.zeros(n_body, dtype=bool)
         for i in range(wanted):
             mask[i] = True
@@ -266,22 +283,27 @@ class App:
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glEnable(GL_BLEND)
 
+        # Generates the stars in the background of the window
         background = Background()
 
+        # Starts
         start = time.time()
         dt = 0
 
         while not self.window_should_close(window):
+            # Updates the introdution
             if self.intro:
                 self.update_intro()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             glClearColor(0.05, 0.05, 0.05, 1.0)
 
+            # Updates the window, background, and axes
             self.update()
             background.draw()
 
             self.draw_axes()
 
+            # Sets the acceleration that will be added to so that all accelerations, velocities, and positions can be updated simultaneously
             a_sum[:] = a
 
             for body in range(n_body):
@@ -291,11 +313,15 @@ class App:
                     if not mask[j]:
                         continue
 
+                    # For every body is being shown, will do the following for every other body:
+
                     s_a, s_b = s[body], s[j]
 
+                    # Determines the distance between the mass that is being analyzed and each other body 
                     ds = s_b - s_a
                     d = np.linalg.norm(ds)
 
+                    # If the distance between the two masses is too small, will mask the second mass, and add it's properties to the original mass
                     if d < 0.05:
                         m[body] = m[body] + m[j]
                         a[body] += a[j]
@@ -306,15 +332,18 @@ class App:
                         m_a = m[body]
                         F_a = np.zeros(3, dtype=np.float32)
 
+                        # Calculates the force of gravity on the body for every other body, and adds it to the total for that body
                         m_b = m[j]
                         Fg = G * m_a * m_b / d**2
 
                         F_a += ds / d * Fg
                         a_sum[body] += F_a
 
+                    # I the body is too close to the black hole, commences it's decay animation
                     if body != 0 and np.linalg.norm(s_a) < black_hole_r:
                         decaying[body] = True
 
+                # Continually decays the trails of all bodies that have entered the black hole until they disappear
                 if decaying[body]:
                     decay[body] *= 0.95
                     v[body] = 0
@@ -323,47 +352,42 @@ class App:
                         decay[body] = 1.0
                         mask[body] = False
 
+            # If the body is not masked and is not decaying, then new accelerations, velocities, and positions are calculated for it
             m_phys = mask & (~decaying)
             a[m_phys] = a_sum[m_phys] / m[m_phys, np.newaxis]
             v[m_phys] = a[m_phys] * dt + v[m_phys]
             s[m_phys] = v[m_phys] * dt + s[m_phys]
 
+            # Resets the position and velocity of the black hole to zero, to ensure it doesn't move, and sets the it's mask to True so that
             v[0] = 0
             s[0] = 0
             mask[0] = True
 
+            # Renders every body that is not masked
             for body in range(n_body):
                 if not mask[body]:
                     continue
                 render_calls[body].draw(s[body], start, decay[body])
 
+            # Creates a new frame
             imgui.new_frame()
             imgui.begin("The Force Awakens")
 
-            # if imgui.button("ADD BODY"):
-            #     add_body(
-            #         render_calls,
-            #         mask,
-            #         s,
-            #         v,
-            #         self.zoom_level,
-            #         (self.pan_x, self.pan_y),
-            #     )
-
+            # Shows the fps and number of bodies currently unmasked
             if dt:
                 imgui.text(f"{1/dt:.2f} fps")
             imgui.text(f"{np.sum(mask)} bodies")
-
+            
             imgui.spacing()
             imgui.spacing()
-
+            # initialize a imgui table to display all of the images and infos
             if imgui.begin_table("Please chose your celestial body !", 2):
                 imgui.table_setup_column("Images")
                 imgui.table_setup_column("Infos")
                 imgui.table_headers_row()
 
                 selection = np.zeros(len(self.items), dtype=bool)
-
+                # itterate trough each characteristics of the planets and display them on the screen (images for this section)
                 for i, item in enumerate(self.items):
                     imgui.table_next_row()
                     imgui.spacing()
@@ -372,7 +396,7 @@ class App:
                     imgui.image(id,width,height)
 
                     imgui.table_next_column()
-
+                    # itterate trough each characteristics of the planets and display them on the screen (mass, name and type for this section)
                     selection[i] = imgui.button(f"Select {name}")
                     imgui.text(name)
                     imgui.text(f"  Mass: {mass:.4g} kg")
@@ -380,6 +404,7 @@ class App:
                     imgui.separator()
 
                 if np.any(selection):
+                    # Adds selected planet into the simulation
                     i = np.argmax(selection)
                     name, _, mass, _ = self.items[i]
                     print(f"body added {name}")
@@ -392,14 +417,15 @@ class App:
                         self.zoom_level,
                         (self.pan_x, self.pan_y),
                     )
+                    # Render the planet and sizes it according it to one hundredth of it's mass's logarithm
                     render_obj = render_calls[draw_i]
                     render_obj.color_arr[:] = COLORS[i]
                     r = np.log10(float(mass))
                     render_obj.r = r * 0.01
                     m[draw_i] = r
-
+                # put an end to the table 
                 imgui.end_table()
-
+            # render the image and complete its "loop"
             imgui.end()
             imgui.render()
             imgui_impl.process_inputs()
@@ -414,6 +440,6 @@ class App:
 
         self.terminate()
 
-
+# run the app
 def run():
     App((1920, 1080), "The Force Awakens")
