@@ -23,6 +23,13 @@ def add_body(render_calls, mask, s, v, zoom, cam_t):
     vec_t = transformed_vector[:3]
 
     i = np.argmin(mask)
+
+    if i == 0:
+        print("BUFFER OVERFLOW: NO MORE AVAILABLE BODIES IN COMPUTE")
+        dist = np.linalg.norm(s, axis=1)
+        i = np.argmax(dist)
+        print(f"overwrite {i}")
+
     # getting the first body that avalaible that we can draw (in relation to the mouse cursor)
     s[i] = vec_t @ np.linalg.inv(T)
     v[i] = vec @ np.linalg.inv(T)
