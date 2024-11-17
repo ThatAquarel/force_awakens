@@ -53,6 +53,7 @@ The requirements for running the code are as follows:
 
 ## How it works
 
+There are many steps to completing this project. First obviously was to gather data of various planets and other celestial bodies across our universe such as exoplanets, stars, etc. We did that by using many tools such as Nasa's Eyes on Exoplanets projects which gives us an accurate representation of what each known star and exoplanet looks like which abled us to draw their visual models. For planets from the Star Wars Universe, we looked trough various fan websites, approximations and even quotes from the movie to get our data (mass,size,etc). Once we had these ressources, we then created many csv and txt files organizing their colors in order to be able to plug them in our actual black hole model. Another step of the process was to code the interface used to select the planets which was done using imgui, a super useful website-building python library, allowing us to design an modern and easy to exchange informations with the user.
 
 
 ## Result
