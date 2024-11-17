@@ -6,7 +6,7 @@
 
 ## Authors
 
-Concretizing the physics formulas we've all seen in class - making them more approachable - by means of interactive visualizations. Simulating orbital mechanics for deep-space navigation and missions.
+> Concretizing the physics formulas we've all seen in class - making them more approachable - by means of interactive visualizations. Simulating orbital mechanics for deep-space navigation and missions.
 
 Tian Yi Xia<sup>1</sup>, Thomas Deleuze-Bisson<sup>1</sup>, Mateo Duque<sup>1</sup></h4>
 
