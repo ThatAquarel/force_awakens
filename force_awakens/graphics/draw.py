@@ -8,7 +8,7 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 
 from force_awakens.mechanics.colors import COLORS
-from force_awakens.graphics.render import create_vbo, update_vbo
+from force_awakens.graphics.render import create_vbo, update_vbo, draw_vbo
 
 
 # The transformation matrix to transform the camera coordinates into the right-handed coordinates
@@ -26,7 +26,7 @@ def generate_sphere_vertices(radius, stacks, slices):
         sin_lat0, cos_lat0 = np.sin(lat0), np.cos(lat0)
         sin_lat1, cos_lat1 = np.sin(lat1), np.cos(lat1)
 
-        for j in range(slices):        
+        for j in range(slices):
             # Gets the longitudinal sections of each vertice
             lon0 = 2 * np.pi * (j / slices)
             lon1 = 2 * np.pi * ((j + 1) / slices)
@@ -126,6 +126,7 @@ def rotation_matrix(rx, ry, rz):
     # Returns the singular translation matrix for the 3
     return z_t @ y_t @ x_t
 
+
 # TARS!!!
 # class Tars:
 #     def __init__(self):
@@ -204,10 +205,8 @@ def rotation_matrix(rx, ry, rz):
 #         glEnd()
 
 
-
-
 class Planet:
-    def __init__(self, r, res=10, s_cache=256):
+    def __init__(self, r, res=15, s_cache=256):
         # Generates a planet with vertices from generate_sphere_vertices
         self.planet = generate_sphere_vertices(1, res, res)
         self.planet = self.planet.reshape((-1, 3))
@@ -223,18 +222,38 @@ class Planet:
         # Sets the initial color to rgb 1,1,1
         self.color_arr = np.ones(3, dtype=np.float32)
 
+        self.def_color = np.ones(4, dtype=np.float32)
+
+        self.sphere_point = generate_sphere_vertices(1, res, res).reshape((-1, 3))
+        self.sphere_color = np.ones((len(self.sphere_point), 4), dtype=np.float32)
+        self.sphere_vbo = create_vbo(self._get_vbo_data(r, [0, 0, 0], self.def_color))
+        self.sphere_stride = self.sphere_point.itemsize * 7
+        self.sphere_n = self.sphere_point.shape[0]
+
+    def _get_vbo_data(self, r, s, col):
+        points = (self.sphere_point * r + s) @ T
+        colors = self.sphere_color * col
+        return np.hstack((points, colors)).astype(np.float32)
+
     def _draw_sphere(self, scalar, r, s, alpha):
         # Draws a sphere using triangles to build it
-        glBegin(GL_TRIANGLES)
-        glColor4f(1, scalar, 1, alpha)
-        pos = (self.planet * r + s) @ T
-        col = self.color_arr * [1, scalar, 1]
-        glColor4f(*col, alpha) 
-        for v in pos:
-            glVertex3f(*v)
-        glEnd()
 
-# TODO DRAW SECTION
+        col = self.def_color * [1, scalar, 1, 1]
+        update_vbo(self.sphere_vbo, self._get_vbo_data(r, s, col))
+        draw_vbo(
+            self.sphere_vbo, self.sphere_stride, GL_TRIANGLES, self.sphere_n, c_ptr=4
+        )
+
+        # glBegin(GL_TRIANGLES)
+        # glColor4f(1, scalar, 1, alpha)
+        # pos = (self.planet * r + s) @ T
+        # col = self.color_arr * [1, scalar, 1]
+        # glColor4f(*col, alpha)
+        # for v in pos:
+        #     glVertex3f(*v)
+        # glEnd()
+
+    # TODO DRAW SECTION
 
     def draw(self, s, _, decay):
         # Draws the introductory sequence for any given newly added planet
@@ -251,7 +270,7 @@ class Planet:
             uniform_points = np.tan(uniform_points)
             glPointSize(2.0)
             glBegin(GL_POINTS)
-            glColor4f(1-scalar,0, 1-scalar, decay)
+            glColor4f(1 - scalar, 0, 1 - scalar, decay)
             for point in uniform_points:
                 glVertex3f(*(point + s) @ T)
             glEnd()
@@ -260,9 +279,9 @@ class Planet:
 
         glLineWidth(2.0)
         glBegin(GL_LINE_STRIP)
-        
+
         # Colors planets
-        col = self.color_arr * [0.5, 0.5*scalar, 0.5]
+        col = self.color_arr * [0.5, 0.5 * scalar, 0.5]
         glColor3f(*col)
         for prev_s in self.prev_s[: self.prev_n : 4]:
             glVertex3f(*prev_s @ T)
@@ -289,7 +308,7 @@ class BlackHole:
         # Gives the stars colors
         colors = np.random.random((n_stars, 3))
         colors = colors + 0.5 * (1 - colors)
-            
+
         self.data = np.empty((n_stars, 6), dtype=np.float32)
         self.data[:, :3] = stars
         self.data[:, 3:] = colors
@@ -314,7 +333,7 @@ class BlackHole:
 
     def _build_rot(self):
         # Creates the rotation matrix for the stars around the black hole
-        rx = 1 / self.dist**2 * (1/30)
+        rx = 1 / self.dist**2 * (1 / 30)
 
         rot_mat = np.zeros((self.n_stars, 3, 3), dtype=np.float32)
         rot_mat[:, 0, 0] = 1
@@ -329,11 +348,11 @@ class BlackHole:
         # Gets information on the buffer of of the stars
         stars = self.rot_mat @ self.data[:, :3, np.newaxis]
         self.data[:, :3] = stars.squeeze(-1)
-    
+
         return self.data
 
     def draw(self, s, t, decay):
-        glDepthMask(GL_FALSE);
+        glDepthMask(GL_FALSE)
         glBindBuffer(GL_ARRAY_BUFFER, self.point_vbo)
 
         glEnableClientState(GL_VERTEX_ARRAY)
@@ -348,7 +367,7 @@ class BlackHole:
         glDisableClientState(GL_VERTEX_ARRAY)
         glDisableClientState(GL_COLOR_ARRAY)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
-        glDepthMask(GL_TRUE);
+        glDepthMask(GL_TRUE)
 
         # Draws the center of the black hole and updates the stars rotating around it
 
@@ -381,7 +400,7 @@ class Background:
         theta = np.random.uniform(0, np.pi, self.n_stars)
         phi = np.random.uniform(0, np.pi, self.n_stars)
         r = np.random.uniform(0, 0.5, self.n_stars)
-        r = np.tan(r * 100 -50) * 1024
+        r = np.tan(r * 100 - 50) * 1024
 
         # Creates the rotation matri of the stars
         stars[:, 0] = r * np.sin(theta) * np.cos(phi)
@@ -391,7 +410,7 @@ class Background:
         return stars
 
     def draw(self):
-        glDepthMask(GL_FALSE);
+        glDepthMask(GL_FALSE)
         glBindBuffer(GL_ARRAY_BUFFER, self.point_vbo)
 
         glEnableClientState(GL_VERTEX_ARRAY)
@@ -407,6 +426,6 @@ class Background:
         glDisableClientState(GL_VERTEX_ARRAY)
         glDisableClientState(GL_COLOR_ARRAY)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
-        glDepthMask(GL_TRUE);
+        glDepthMask(GL_TRUE)
 
         glClear(GL_DEPTH_BUFFER_BIT)
