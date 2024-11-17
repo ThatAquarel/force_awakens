@@ -5,17 +5,14 @@ import time
 
 app = Flask(__name__)
 
-# Define a buffer to store accelerometer data
-BUFFER_SIZE = 1000  # Maximum number of records to store
-data_buffer = np.zeros((BUFFER_SIZE, 5))  # Columns: timestamp, x, y, z, user_id
+BUFFER_SIZE = 1000
+data_buffer = np.zeros((BUFFER_SIZE, 5))
 buffer_index = 0
 
-# Serve the index.html file
 @app.route('/')
 def serve_index():
     return send_from_directory(os.path.dirname(__file__), 'index.html')
 
-# Collect accelerometer data
 @app.route('/data', methods=['POST'])
 def collect_data():
     print("post collect")
