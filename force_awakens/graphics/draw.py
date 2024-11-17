@@ -221,11 +221,10 @@ class Planet:
 
         # Sets the initial color to rgb 1,1,1
         self.def_color = np.ones(4, dtype=np.float32)
-        s0 = np.zeros(3, dtype=np.float32)
 
         self.sphere_point = generate_sphere_vertices(1, res, res).reshape((-1, 3))
         self.sphere_color = np.ones((len(self.sphere_point), 4), dtype=np.float32)
-        self.sphere_vbo = create_vbo(self._get_s_vbo_data(r, s0, self.def_color))
+        self.sphere_vbo = create_vbo(self._get_s_vbo_data(r, [0, 0, 0], self.def_color))
         self.sphere_stride = self.sphere_point.itemsize * 7
         self.sphere_n = self.sphere_point.shape[0]
 
@@ -297,6 +296,14 @@ class BlackHole:
         self.vertices = generate_sphere_vertices(r, res, res)
         self.vertices = self.vertices.reshape((-1, 3))
 
+        sphere_point = generate_sphere_vertices(r, res, res).reshape((-1, 3))
+        sphere_vbo_data = np.zeros((len(sphere_point), 6), dtype=np.float32)
+        sphere_vbo_data[:, :3] = sphere_point
+
+        self.sphere_vbo = create_vbo(sphere_vbo_data)
+        self.sphere_stride = sphere_point.itemsize * 6
+        self.sphere_n = sphere_point.shape[0]
+
         # Creates the stars surrounding the black hole
         self.n_stars = n_stars
         stars = np.random.random((n_stars, 3)) * 5 - 2.5
@@ -318,15 +325,8 @@ class BlackHole:
 
         self.point_vbo = create_vbo(self._get_vbo_data(0))
 
-    def _draw_center(self, r, s):
-        # Draws center of black hole
-        glBegin(GL_TRIANGLES)
-        glColor3f(0, 0, 0)
-        pos = (self.vertices * r + s) @ T
-        for v in pos:
-            glVertex3f(*v)
-
-        glEnd()
+    def _draw_center(self, *_):
+        draw_vbo(self.sphere_vbo, self.sphere_stride, GL_TRIANGLES, self.sphere_n)
 
     def _build_rot(self):
         # Creates the rotation matrix for the stars around the black hole
@@ -348,25 +348,11 @@ class BlackHole:
 
         return self.data
 
-    def draw(self, s, t, decay):
+    def draw(self, s, t, _):
         glDepthMask(GL_FALSE)
-        glBindBuffer(GL_ARRAY_BUFFER, self.point_vbo)
-
-        glEnableClientState(GL_VERTEX_ARRAY)
-        glVertexPointer(3, GL_FLOAT, self.stride, ctypes.c_void_p(0))
-        glEnableClientState(GL_COLOR_ARRAY)
-        glColorPointer(3, GL_FLOAT, self.stride, ctypes.c_void_p(self.stride // 2))
-
         glPointSize(1.0)
-        glDrawArrays(GL_POINTS, 0, self.n_stars)
-        glDrawArrays(GL_POINTS, 0, 3)
-
-        glDisableClientState(GL_VERTEX_ARRAY)
-        glDisableClientState(GL_COLOR_ARRAY)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
+        draw_vbo(self.point_vbo, self.stride, GL_POINTS, self.n_stars)
         glDepthMask(GL_TRUE)
-
-        # Draws the center of the black hole and updates the stars rotating around it
 
         update_vbo(self.point_vbo, self._get_vbo_data(t))
 
@@ -408,21 +394,9 @@ class Background:
 
     def draw(self):
         glDepthMask(GL_FALSE)
-        glBindBuffer(GL_ARRAY_BUFFER, self.point_vbo)
 
-        glEnableClientState(GL_VERTEX_ARRAY)
-        glVertexPointer(3, GL_FLOAT, self.stride, ctypes.c_void_p(0))
-        glEnableClientState(GL_COLOR_ARRAY)
-        glColorPointer(3, GL_FLOAT, self.stride, ctypes.c_void_p(self.stride // 2))
-
-        # Draws the stars in the background
         glPointSize(1.0)
-        glDrawArrays(GL_POINTS, 0, self.n_stars)
-        glDrawArrays(GL_POINTS, 0, 3)
+        draw_vbo(self.point_vbo, self.stride, GL_POINTS, self.n_stars)
 
-        glDisableClientState(GL_VERTEX_ARRAY)
-        glDisableClientState(GL_COLOR_ARRAY)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
         glDepthMask(GL_TRUE)
-
         glClear(GL_DEPTH_BUFFER_BIT)
