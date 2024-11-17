@@ -1,9 +1,6 @@
-import importlib.resources
-import io
 import math
-import numpy as np
-import importlib
 
+import numpy as np
 from OpenGL.GL import *
 from OpenGL.GLU import *
 

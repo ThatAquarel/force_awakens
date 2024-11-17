@@ -1,9 +1,9 @@
 import io
+import importlib.resources
+
 import numpy as np
 from OpenGL.GL import *
 from PIL import Image
-import importlib.resources
-
 
 import force_awakens.images
 

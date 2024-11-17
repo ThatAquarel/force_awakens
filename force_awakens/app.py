@@ -1,6 +1,7 @@
 import io
 import time
 import importlib.resources
+from queue import Empty
 
 import glfw
 import numpy as np
@@ -8,8 +9,6 @@ import pandas as pd
 
 import imgui
 from imgui.integrations.glfw import GlfwRenderer
-
-from queue import Empty
 
 from OpenGL.GL import *
 from OpenGL.GLU import *

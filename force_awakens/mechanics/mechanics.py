@@ -1,5 +1,4 @@
 import numpy as np
-
 from OpenGL.GL import *
 
 from force_awakens.graphics.draw import rotation_matrix
