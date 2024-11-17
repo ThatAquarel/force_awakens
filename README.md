@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="./force_awakens/images/banner.png" alt="figure 1", width="25%"/>
+  <img src="./force_awakens/images/banner.png" alt="figure 1", width="126%"/>
 </p>
 
 
