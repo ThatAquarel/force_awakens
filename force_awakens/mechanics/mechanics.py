@@ -23,10 +23,14 @@ def add_body(render_calls, mask, s, v, zoom, cam_t):
     transformed_vector = np.dot(modelview_matrix, vector_2)
     vec_t = transformed_vector[:3]
 
+    # find first available spot in the bodies buffers
     i = np.argmin(mask)
 
     if i == 0:
         print("BUFFER OVERFLOW: NO MORE AVAILABLE BODIES IN COMPUTE")
+
+        # overwrite the body that is furthest from center
+        # therefore less possible to be seen, with the newest body
         dist = np.linalg.norm(s, axis=1)
         i = np.argmax(dist)
         print(f"overwrite {i}")
@@ -35,6 +39,7 @@ def add_body(render_calls, mask, s, v, zoom, cam_t):
     s[i] = vec_t @ np.linalg.inv(T)
     v[i] = vec @ np.linalg.inv(T)
 
+    # activate body rendering, and start body intro
     mask[i] = True
     render_calls[i].prev_n = 0
     render_calls[i].intro = True

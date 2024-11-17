@@ -102,25 +102,34 @@
     </style>
 
     <script>
+      // detect if accelerometer is supported on connecting device
       if (!window.DeviceMotionEvent) {
         console.error("DeviceMotionEvent not supported on this device");
       }
 
       let is_running = false;
-      const user = Math.floor(Math.random() * 2147483648);
 
+      // generate random user id
+      const user = Math.floor(Math.random() * 2147483648);
+      
+      // connect button callbacks to connect and disconnect
       const demo_button = document.getElementById("start");
       const demo_button_txt = document.getElementById("button-text");
       demo_button.onclick = function (e) {
         e.preventDefault();
 
+        // if start connection to webserver, then ask permission
+        // (iOS) for using accelerometer data
         if (
           DeviceMotionEvent &&
           typeof DeviceMotionEvent.requestPermission === "function"
         ) {
           DeviceMotionEvent.requestPermission();
         }
-
+        
+        // change button depending on current app state
+        // connect and disconnect accel data sending,
+        // and motion callback
         if (is_running) {
           window.removeEventListener("devicemotion", handleMotion);
           demo_button_txt.innerText = "CONNECT";
@@ -132,14 +141,17 @@
         }
       };
 
+      // visualize xy accelerometer data by means of js canvas
       const canvas = document.getElementById("canvas");
       const ctx = canvas.getContext("2d");
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+      
+      // get labels, to preview accel values
       const xl = document.getElementById("x-label");
       const yl = document.getElementById("y-label");
       const zl = document.getElementById("z-label");
 
+      // text formatting for labels
       function round_num(num) {
         let n = (Math.round(num * 100) / 100).toFixed(2);
 
@@ -153,14 +165,19 @@
       let prev_x = 0;
 
       function handleMotion(event) {
+        // on motion, get current accelerations
         const x = event.acceleration.x || 0;
         const y = event.acceleration.y || 0;
         const z = event.acceleration.z || 0;
-
+        
+        // display values on labels
         xl.innerText = round_num(x);
         yl.innerText = round_num(y);
         zl.innerText = round_num(z);
 
+        // update canvas visualization
+        // with a line that points towards acceleration
+        // direction
         ctx.fillStyle = "white";
         ctx.strokeStyle = "black";
         let w = canvas.width;
@@ -172,19 +189,25 @@
         ctx.lineTo(w / 2 + (x * w) / 2, h / 2 + (y * h) / 2);
         ctx.stroke();
 
+        // thresholding for a large enough acceleration
+        // spike
         if (Math.abs(y) < 15) {
           return;
         }
 
         console.log("high accel");
 
+        // debounce high accelerations with 500ms delay
+        // so that we don't send too many events to webserver
         if ((Date.now() - debounce) < 500) {
             return;
         }
         debounce = Date.now();
 
         console.log("debounce pass");
-
+        
+        // all conditions passed, POST data to webserver to
+        // display
         const data = {
           user_id: user,
           x: x,
