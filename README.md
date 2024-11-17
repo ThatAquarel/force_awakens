@@ -1,6 +1,6 @@
-![Banner](docs/banner_text.png)
+[![Banner](docs/banner_text.png)](https://www.youtube.com/watch?v=0m9UCKqh6oY)
 
-#### Black Hole Orbital Mechanics N-Body Simulator
+#### Black Hole Orbital Mechanics N-Body Simulator: [Video Demo](https://www.youtube.com/watch?v=0m9UCKqh6oY)
 
 ![Icons](https://skillicons.dev/icons?i=python,htmx,gtk)
 
