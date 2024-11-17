@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Force Awakens</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>
+      eruda.init();
+    </script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <h1 id="labels">The Force Awakens</h1>
+      <h2 id="labels">2024 MCGILL PHYSICS HACKATHON SUBMISSION</h2>
+    </div>
+
+    <div class="container">
+      <button id="start"><h2 id="button-text">CONNECT</h2></button>
+      <table>
+        <tr>
+          <th>X</th>
+          <th>Y</th>
+          <th>Z</th>
+        </tr>
+        <tr>
+          <td id="x-label">0</td>
+          <td id="y-label">0</td>
+          <td id="z-label">0</td>
+        </tr>
+      </table>
+      <canvas id="canvas"></canvas>
+    </div>
+    <style>
+      * {
+        font-family: "Poppins", sans-serif;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #f5f5f5;
+      }
+
+      h1 {
+        margin: 0;
+        font-weight: 600;
+        line-height: 32px;
+      }
+
+      h2 {
+        font-size: medium;
+        font-weight: 100;
+        letter-spacing: -0.5px;
+        line-height: 24px;
+      }
+
+      button {
+        width: 100%;
+        margin-top: 0;
+        margin-bottom: 10px;
+        background-color: #34a853;
+        color: white;
+        border: 0;
+        border-radius: 10px;
+      }
+
+      canvas {
+        width: 100%;
+        height: 50vh;
+
+        border-radius: 10px;
+      }
+
+      table {
+        table-layout: fixed;
+
+        width: 100%;
+        border-radius: 10px;
+
+        padding: 1px;
+        padding-left: 10px;
+        text-align: left;
+
+        margin-top: 0;
+        margin-bottom: 10px;
+        background-color: #dddddd;
+      }
+
+      .container {
+        margin: 20px;
+        border-radius: 10px;
+        background-color: #efefef;
+        padding: 25px;
+        filter: drop-shadow(4px 4px 4px #efefef);
+      }
+    </style>
+
+    <script>
+      if (!window.DeviceMotionEvent) {
+        console.error("DeviceMotionEvent not supported on this device");
+      }
+
+      let is_running = false;
+      const user = Math.floor(Math.random() * 2147483648);
+
+      const demo_button = document.getElementById("start");
+      const demo_button_txt = document.getElementById("button-text");
+      demo_button.onclick = function (e) {
+        e.preventDefault();
+
+        if (
+          DeviceMotionEvent &&
+          typeof DeviceMotionEvent.requestPermission === "function"
+        ) {
+          DeviceMotionEvent.requestPermission();
+        }
+
+        if (is_running) {
+          window.removeEventListener("devicemotion", handleMotion);
+          demo_button_txt.innerText = "CONNECT";
+          is_running = false;
+        } else {
+          window.addEventListener("devicemotion", handleMotion);
+          demo_button_txt.innerText = "DISCONNECT";
+          is_running = true;
+        }
+      };
+
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const xl = document.getElementById("x-label");
+      const yl = document.getElementById("y-label");
+      const zl = document.getElementById("z-label");
+
+      function round_num(num) {
+        let n = (Math.round(num * 100) / 100).toFixed(2);
+
+        if (n <= 0) {
+          return n;
+        }
+        return "+" + n;
+      }
+
+      let debounce = Date.now();
+
+      function handleMotion(event) {
+        const x = event.acceleration.x || 0;
+        const y = event.acceleration.y || 0;
+        const z = event.acceleration.z || 0;
+
+        xl.innerText = round_num(x);
+        yl.innerText = round_num(y);
+        zl.innerText = round_num(z);
+
+        ctx.fillStyle = "white";
+        ctx.strokeStyle = "black";
+        let w = canvas.width;
+        let h = canvas.height;
+
+        ctx.fillRect(0, 0, w, h);
+        ctx.beginPath();
+        ctx.moveTo(w / 2, h / 2);
+        ctx.lineTo(w / 2 + (x * w) / 2, h / 2 + (y * h) / 2);
+        ctx.stroke();
+
+        if (Math.abs(x) < 20) {
+          return;
+        }
+
+        if ((Date.now() - debounce) < 250) {
+            return;
+        }
+        debounce = Date.now();
+
+        const data = {
+          user_id: user,
+          x: x,
+          y: y,
+          z: z,
+        };
+
+        fetch("data", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }).then((response) => {
+          if (response.ok) {
+            console.log("Data sent successfully");
+          } else {
+            console.error("Error sending data");
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

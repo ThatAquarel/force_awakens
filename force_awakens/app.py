@@ -9,13 +9,15 @@ import pandas as pd
 import imgui
 from imgui.integrations.glfw import GlfwRenderer
 
+from queue import Empty
+
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
 import force_awakens.mechanics
 from force_awakens.graphics.draw import Background, BlackHole, Planet
 from force_awakens.graphics.render import load_texture_simple
-from force_awakens.mechanics.mechanics import add_body
+from force_awakens.mechanics.mechanics import add_body, add_throw
 from force_awakens.mechanics.colors import COLORS
 
 # Drawing transformation array to transform OpenGL coordinates to right-handed physics coordinate system 
@@ -31,6 +33,9 @@ class App:
         self,
         window_size,
         name,
+        web,
+        qr=None,
+        vec_queue=None,
         zoom_sensitivity=0.1,
         pan_sensitvity=0.001,
         orbit_sensitivity=0.1,
@@ -59,9 +64,26 @@ class App:
         self.imgui_impl = self.init_imgui(self.window)
 
         # Renders all items inside the window
+        self.web = web
+        if web:
+            self.qr_tex = self._load_qr(qr)
+            self.vec_queue = vec_queue
+
         self._load_planets()
         self.rendering_loop(self.window, self.imgui_impl)
 
+    def _load_qr(self, qr):
+        img_data = qr.convert("RGBA").tobytes()
+        width, height = qr.size
+        texture_id = glGenTextures(1)
+        glBindTexture(GL_TEXTURE_2D, texture_id)
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img_data)
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+        return texture_id, width, height
 
     def _load_planets(self):
         self.items = []
@@ -427,6 +449,30 @@ class App:
                 imgui.end_table()
             # render the image and complete its "loop"
             imgui.end()
+
+            if self.web:
+                imgui.begin("Web QR")
+                imgui.image(*self.qr_tex)
+                imgui.end()
+
+                try:
+                    vec = self.vec_queue.get_nowait()
+
+                    draw_i = add_throw(
+                        vec,
+                        render_calls,
+                        mask,
+                        s,
+                        v,
+                    )
+                    render_obj = render_calls[draw_i]
+                    render_obj.color_arr[:] = COLORS[0]
+                    r = 100
+                    render_obj.r = r * 0.01
+                    m[draw_i] = r
+                except Empty:
+                    pass
+
             imgui.render()
             imgui_impl.process_inputs()
             imgui_impl.render(imgui.get_draw_data())
@@ -441,5 +487,8 @@ class App:
         self.terminate()
 
 # run the app
-def run():
-    App((1920, 1080), "The Force Awakens")
+def run(web, qr=None, vec_queue=None):
+    if web:
+        App((1920, 1080), "The Force Awakens", web, qr=qr, vec_queue=vec_queue)
+    else:
+        App((1920, 1080), "The Force Awakens", web, qr=qr)
