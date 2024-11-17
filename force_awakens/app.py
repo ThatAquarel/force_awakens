@@ -112,7 +112,7 @@ class App:
             img_file = row["img_file"]
 
             if not pd.isna(img_file):
-                img_id, width, height = load_texture_simple(img_file)
+                img_id, width, height = load_texture_simple(img_file, size=(140, 160))
             else:
                 continue
             width, height = width // 2, height // 2
@@ -440,9 +440,14 @@ class App:
             imgui.spacing()
             imgui.spacing()
             # initialize a imgui table to display all of the images and infos
+            w = imgui.get_content_region_available_width()
             if imgui.begin_table("Please chose your celestial body !", 2):
-                imgui.table_setup_column("Images")
-                imgui.table_setup_column("Infos")
+                imgui.table_setup_column(
+                    "Images", imgui.TABLE_COLUMN_WIDTH_FIXED, w // 3
+                )
+                imgui.table_setup_column(
+                    "Infos", imgui.TABLE_COLUMN_WIDTH_FIXED, 2 * w // 3
+                )
                 imgui.table_headers_row()
 
                 selection = np.zeros(len(self.items), dtype=bool)

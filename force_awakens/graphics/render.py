@@ -41,13 +41,21 @@ def draw_vbo(vbo, stride, draw_type, n, v_ptr=3, c_ptr=3):
 
 
 # function for initializing all of the images, the bits, their settings, their width and returns those parameters appropriated for the given images
-def load_texture_simple(image_path):
+def load_texture_simple(image_path, size=None):
     bits = importlib.resources.read_binary(force_awakens.images, image_path)
     image = Image.open(io.BytesIO(bits))
     # convverts images to bytes
-    img_data = image.convert("RGBA").tobytes()
-    width, height = image.size
-    # just importing and initialzing a bunch of parameters that will be used later in the program
+    if type(size) != type(None):
+        buf = np.zeros((*size, 4), dtype=np.uint8)
+        img = np.array(image.convert("RGBA"))
+        h, w, _ = np.min([buf.shape, img.shape], axis=0)
+        buf[:h, :w] = img[:h, :w]
+        img_data = buf.tobytes()
+        width, height = size[::-1]
+    else:
+        img_data = image.convert("RGBA").tobytes()
+        width, height = image.size
+
     texture_id = glGenTextures(1)
     glBindTexture(GL_TEXTURE_2D, texture_id)
 
