@@ -1,5 +1,5 @@
 import numpy as np
-
+#colors representing the closest ressembling rgb combination to all of the given planets (21 of them)
 COLORS = (
     np.array(
         [
