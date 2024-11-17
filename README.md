@@ -1,10 +1,6 @@
-<p align="center">
-  <img src="./docs/banner_text.png" alt="figure 1", width="100%"/>
-</p>
+![Banner](docs/banner_text.png)
 
-# Black Hole Orbital Mechanics N-Body Simulator
-
-<hr>
+#### Black Hole Orbital Mechanics N-Body Simulator
 
 ![Icons](https://skillicons.dev/icons?i=python,htmx,gtk)
 
