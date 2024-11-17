@@ -1,4 +1,7 @@
-### Force_Awakens
+
+<p align="center">
+  <img src="./force_awakens/images/banner.png" alt="figure 1", width="25%"/>
+</p>
 
 
 ## Authors : 
