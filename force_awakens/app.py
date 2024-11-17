@@ -486,7 +486,8 @@ class App:
 
                 try:
                     self.vec_queue.get_nowait()
-                    draw_new([1, 1, 1], 50)
+                    r = np.random.uniform(10, 80)
+                    draw_new([1, 1, 1], r)
                 except Empty:
                     pass
 
