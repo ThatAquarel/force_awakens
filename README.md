@@ -59,6 +59,7 @@ There are many steps to completing this project. First obviously was to gather d
   <img src="./force_awakens/images/orange-red.png" alt="figure 1", width="25%"/>
 </p>
 
+Now for the math parts, more especially for the gravitationnal field part, this is how thing works: we calculate seperatly the Fg using the G(m1)(m2)/r^2 formula by adding all of the fg exerted by the different planets on the desired planet. It is important to mention that this process will be repeated for every single planets; in other words, we calculate the Fnet for every planets by adding all of the Fg that the other planets exert on it. We then find their acceleration with Newton's Second Law. Their velocity using the acceleration and finally, their position using this velocity that gets updated every frame at approximatively 60 frames per second which gives an impression that it is constantly moving, similarly to what happens in real life. 
 
 
 ## Result
