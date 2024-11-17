@@ -49,6 +49,7 @@ The requirements for running the code are as follows:
 - importlib == version?
 - io == version?
 - math == version?
+- jekyll-remote-theme ??????
 
 ## How it works
 
