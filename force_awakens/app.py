@@ -277,7 +277,7 @@ class App:
         self,
         window,
         imgui_impl,
-        n_body=32,
+        n_body=64,
         G=6.6743e-2,
         wanted=16,
         black_hole_r=1,
