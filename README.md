@@ -80,6 +80,9 @@ We started by looking on various NASA websites for exoplanets and information ab
 =======
 # Contact
 
+- [Tian Yi, Xia](https://github.com/ThatAquarel/space), xtxiatianyi@gmail.com: 
+- [Thomas, Deleuze-Bisson](https://github.com/Thomas4534), deleuzethomasbisson@gmail.com: 
+- [Evan Parasol](https://github.com/TheBookwyrms), blackdragon6493@gmail.com: 
 
 
 # References
