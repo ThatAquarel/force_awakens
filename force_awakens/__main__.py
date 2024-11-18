@@ -55,18 +55,16 @@ def main():
             # start ngrok tunnel for port, and expose webserver
             # to public QR code
 
-            listener = ngrok.connect(args.port, authtoken="2nJ1zipjhf59cNScDSaJqfVHsPn_5hgU2LsCZPyABSqr2SYqR")
-
-            # if args.token:
-            #     listener = ngrok.connect(args.port, authtoken=args.token)
-            # else:
-            #     listener = ngrok.connect(args.port, authtoken_from_env=True)
+            if args.token:
+                listener = ngrok.connect(args.port, authtoken=args.token)
+            else:
+                listener = ngrok.connect(args.port, authtoken_from_env=True)
 
             url = listener.url()
 
         print(f"Ingress established at {url}")
 
-        # generate QR code, and pass the image to 
+        # generate QR code, and pass the image to
         # the renderer
         img = qrcode.make(url)
         app.run(
