@@ -473,73 +473,75 @@ class App:
                 decaying[draw_i] = False
                 decay[draw_i] = 1.0
 
-            imgui.spacing()
-            imgui.spacing()
+            def imgui_stuff():
+                imgui.spacing()
+                imgui.spacing()
 
-            # initialize a imgui table to display all of the images and infos
-            # of possible planets to add
-            w = imgui.get_content_region_available_width()
-            if imgui.begin_table("Please chose your celestial body !", 2):
-                imgui.table_setup_column(
-                    "Images", imgui.TABLE_COLUMN_WIDTH_FIXED, w // 3
-                )
-                imgui.table_setup_column(
-                    "Infos", imgui.TABLE_COLUMN_WIDTH_FIXED, 2 * w // 3
-                )
-                imgui.table_headers_row()
+                # initialize a imgui table to display all of the images and infos
+                # of possible planets to add
+                w = imgui.get_content_region_available_width()
+                if imgui.begin_table("Please chose your celestial body !", 2):
+                    imgui.table_setup_column(
+                        "Images", imgui.TABLE_COLUMN_WIDTH_FIXED, w // 3
+                    )
+                    imgui.table_setup_column(
+                        "Infos", imgui.TABLE_COLUMN_WIDTH_FIXED, 2 * w // 3
+                    )
+                    imgui.table_headers_row()
 
-                selection = np.zeros(len(self.items), dtype=bool)
-                # iterate trough each characteristics of the planets
-                # and display them on the screen (images for this section)
-                for i, item in enumerate(self.items):
-                    imgui.table_next_row()
-                    imgui.spacing()
-                    imgui.table_next_column()
-                    name, body_type, mass, (id, width, height) = item
-                    imgui.image(id, width, height)
+                    selection = np.zeros(len(self.items), dtype=bool)
+                    # iterate trough each characteristics of the planets
+                    # and display them on the screen (images for this section)
+                    for i, item in enumerate(self.items):
+                        imgui.table_next_row()
+                        imgui.spacing()
+                        imgui.table_next_column()
+                        name, body_type, mass, (id, width, height) = item
+                        imgui.image(id, width, height)
 
-                    imgui.table_next_column()
-                    # itterate trough each characteristics of the planets
-                    # and display them on the screen (mass, name and type for this section)
-                    selection[i] = imgui.button(f"Select {name}")
-                    imgui.text(name)
-                    imgui.text(f"  Mass: {mass:.4g} kg")
-                    imgui.text(f"  Type: {body_type}")
-                    imgui.separator()
+                        imgui.table_next_column()
+                        # itterate trough each characteristics of the planets
+                        # and display them on the screen (mass, name and type for this section)
+                        selection[i] = imgui.button(f"Select {name}")
+                        imgui.text(name)
+                        imgui.text(f"  Mass: {mass:.4g} kg")
+                        imgui.text(f"  Type: {body_type}")
+                        imgui.separator()
 
-                # if any planet is selected in the table
-                if np.any(selection):
-                    # Adds selected planet into the simulation
-                    i = np.argmax(selection)
-                    name, _, mass, _ = self.items[i]
-                    print(f"body added {name}")
-                    draw_new(COLORS[i], np.log10(float(mass)))
+                    # if any planet is selected in the table
+                    if np.any(selection):
+                        # Adds selected planet into the simulation
+                        i = np.argmax(selection)
+                        name, _, mass, _ = self.items[i]
+                        print(f"body added {name}")
+                        draw_new(COLORS[i], np.log10(float(mass)))
 
-                # put an end to the table
-                imgui.end_table()
-            # render the image and complete its "loop"
-            imgui.end()
-
-            # if web is enabled, draw QR code for clients to
-            # connect to the flask server
-            if self.web:
-                imgui.begin("Web QR")
-                imgui.image(*self.qr_tex)
+                    # put an end to the table
+                    imgui.end_table()
+                # render the image and complete its "loop"
                 imgui.end()
 
-                try:
-                    # if received new throw vector from user,
-                    # add new planet
-                    self.vec_queue.get_nowait()
-                    r = np.random.uniform(10, 80)
-                    draw_new([1, 1, 1], r)
-                except Empty:
-                    pass
-                
-            # render ui
-            imgui.render()
-            imgui_impl.process_inputs()
-            imgui_impl.render(imgui.get_draw_data())
+                # if web is enabled, draw QR code for clients to
+                # connect to the flask server
+                if self.web:
+                    imgui.begin("Web QR")
+                    imgui.image(*self.qr_tex)
+                    imgui.end()
+
+                    try:
+                        # if received new throw vector from user,
+                        # add new planet
+                        self.vec_queue.get_nowait()
+                        r = np.random.uniform(10, 80)
+                        draw_new([1, 1, 1], r)
+                    except Empty:
+                        pass
+                    
+                # render ui
+                imgui.render()
+                imgui_impl.process_inputs()
+                imgui_impl.render(imgui.get_draw_data())
+            imgui_stuff()
 
             # swap framebuffers and render screen
             glfw.swap_buffers(window)
