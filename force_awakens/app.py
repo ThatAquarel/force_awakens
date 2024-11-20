@@ -56,7 +56,7 @@ class App:
 
         # Calls the introductory zoom in from the start time
         self.start_time = time.time()
-        self.intro = True
+        self.intro = False
 
         self.view_left, self.view_right = 0, 0
 
