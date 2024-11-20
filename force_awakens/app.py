@@ -304,7 +304,7 @@ class App:
         a = np.zeros((n_body, 3), dtype=np.float32)
         a_sum = np.zeros((n_body, 3), dtype=np.float32)
         v = np.random.randint(-1, 1, (n_body, 3)).astype(float)
-        s = np.random.randint(-10, 10, (n_body, 3)).astype(float)
+        s = np.random.randint(-20, 20, (n_body, 3)).astype(float)
 
         # Initialises the lack of decay of any initial body
         decaying = np.zeros(n_body, dtype=bool)
@@ -425,8 +425,8 @@ class App:
 
             # Resets the position and velocity of the black hole to zero,
             # to ensure it doesn't move, and sets the it's mask to True so that
-            v[0] = 0
-            s[0] = 0
+            #v[0] = 0
+            #s[0] = 0
             mask[0] = True
 
             # Creates a new frame
