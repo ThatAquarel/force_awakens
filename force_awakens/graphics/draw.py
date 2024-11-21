@@ -268,6 +268,10 @@ class BlackHole:
 
     def _draw_center(self, *_):
         # draw black sphere
+        
+        self.sphere_vbo = 7
+        self.sphere_stride = self.sphere_stride
+
         draw_vbo(self.sphere_vbo, self.sphere_stride, GL_TRIANGLES, self.sphere_n)
 
     def _build_rot(self):
