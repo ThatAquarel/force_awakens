@@ -19,6 +19,10 @@ Tian Yi Xia<sup>1</sup>, Thomas Deleuze-Bisson<sup>1</sup>, Evan Parasol<sup>1</
 
 Three Dawson College Students in the Enriched Science Program. As we share common passions such as programming, physics, space and math, we've decided to participate in the **2024 Edition of the McGill University Physics Hackathon**. Ever since we had figured out that astrophysics was a field that scared most people because of its complexity, we decided to make it our mission to demonstrate it in the simplest way possible and what better way to do so than to make **an accessible, interactive and adaptable sandbox in which the powers of gravitational fields, forces and accelerations can be observed - and harnessed**.
 
+## The Application
+
+![Intro Zoom](docs/intro.gif)
+
 ## The Idea
 
 - Taking the wonder of space and the beauty of orbital mechanics, to visualize them to the eyes of anyone by implementing a program that **simulates the orbits of celestial bodies around a black hole**.

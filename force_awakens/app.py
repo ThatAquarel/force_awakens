@@ -72,7 +72,7 @@ class App:
             self.qr_tex = self._load_qr(qr)
             self.vec_queue = vec_queue
 
-        # Preload buffers and textures of 
+        # Preload buffers and textures of
         # possible planets to add
         self._load_planets()
 
@@ -82,7 +82,7 @@ class App:
     def _load_qr(self, qr):
         img_data = qr.convert("RGBA").tobytes()
         width, height = qr.size
-        
+
         # Bind QR as a texture for imgui rendering
         texture_id = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, texture_id)
@@ -136,7 +136,9 @@ class App:
 
         # Creates window
         glfw.window_hint(glfw.SAMPLES, 4)
-        window = glfw.create_window(*window_size, name, None, None)
+        window = glfw.create_window(
+            *window_size, name, glfw.get_primary_monitor(), None
+        )
         if not window:
             glfw.terminate()
             raise Exception("GLFW window could not be created.")
@@ -144,7 +146,7 @@ class App:
         # Gets and uses information needed to maintain and update the window
         glfw.make_context_current(window)
 
-        # Attach functions to callback 
+        # Attach functions to callback
         glfw.set_cursor_pos_callback(window, self.cursor_pos_callback)
         glfw.set_mouse_button_callback(window, self.mouse_button_callback)
         glfw.set_scroll_callback(window, self.scroll_callback)
@@ -283,8 +285,13 @@ class App:
     def update_intro(self):
         # Zooms into the window upon program commencing
         dt = time.time() - self.start_time
-        if dt > 4.0:
+        if dt < 3.0:
+            return
+
+        if dt > 7.0:
             self.intro = False
+
+        dt = dt - 3
 
         # Update the zoom_level depending on intro progress
         progress = (1 / (dt - 0.1)) ** 2 + 1
@@ -415,7 +422,7 @@ class App:
                         decay[body] = 1.0
                         mask[body] = False
 
-            # If the body is not masked and is not decaying, 
+            # If the body is not masked and is not decaying,
             # then new accelerations,
             # velocities, and positions are calculated for it
             m_phys = mask & (~decaying)
@@ -535,7 +542,7 @@ class App:
                     draw_new([1, 1, 1], r)
                 except Empty:
                     pass
-                
+
             # render ui
             imgui.render()
             imgui_impl.process_inputs()
